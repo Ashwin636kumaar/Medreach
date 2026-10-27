@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Collect Payment - MedReach Diagnostics Field Portal</title>
+   <link rel="icon" href="/static/images/favicon.svg" type="image/svg+xml">
+  <style>
+    :root { --primary:#149B9E; --primary-dark:#0E7F82; --primary-light:#E6F7F5; --border:#E2E8F0; --text-dark:#0F172A; --text-secondary:#64748B; --gold:#FDE047; --red:#EF4444; }
+    * { box-sizing:border-box; margin:0; padding:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+    html,body { width:100%; min-height:100%; background:#F8FAFC; color:var(--text-dark); }
+    body { display:flex; flex-direction:column; }
+
+    .portal-navbar { height:68px; background:#fff; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; padding:0 40px; position:sticky; top:0; z-index:1000; box-shadow:0 2px 10px rgba(0,0,0,.03); }
+    .brand { display:flex; align-items:center; gap:14px; text-decoration:none; color:inherit; }
+    .brand-icon { width:42px; height:42px; border-radius:50%; background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:800; }
+    .brand h1 { font-size:20px; font-weight:800; letter-spacing:-.5px; line-height:1.1; }
+    .brand span { font-size:11px; font-weight:600; color:var(--primary); text-transform:uppercase; letter-spacing:.8px; }
+    .nav-right { display:flex; align-items:center; gap:16px; }
+    .bell { width:42px; height:42px; border-radius:50%; background:#F8FAFC; border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:18px; text-decoration:none; position:relative; }
+    .bell i { position:absolute; top:9px; right:10px; width:8px; height:8px; border-radius:50%; background:var(--red); }
+    .user { display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit; padding:6px 14px 6px 6px; border-radius:30px; background:#F1F5F9; }
+    .avatar { width:36px; height:36px; border-radius:50%; background:var(--gold); color:#854D0E; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:14px; }
+
+    .page { width:100%; max-width:1200px; margin:0 auto; padding:30px 40px 50px; display:flex; flex-direction:column; gap:24px; }
+    .page-head { display:flex; align-items:center; gap:14px; }
+    .back-btn { width:42px; height:42px; border-radius:50%; background:#fff; border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:18px; color:var(--text-dark); text-decoration:none; }
+    .back-btn:hover { background:#F1F5F9; }
+    .page-head h2 { font-size:26px; font-weight:800; letter-spacing:-.4px; }
+    .crumbs { font-size:13px; color:var(--text-secondary); margin-top:2px; }
+
+    .layout { display:grid; grid-template-columns:1fr 1.3fr; gap:26px; align-items:start; }
+    @media (max-width:900px) { .layout { grid-template-columns:1fr; } .portal-navbar { padding:0 16px; } .page { padding:20px 16px 40px; } }
+
+    .panel { background:#fff; border:1px solid var(--border); border-radius:24px; padding:28px; box-shadow:0 4px 16px rgba(0,0,0,.03); }
+    .amount-box { background:#F8FAFC; border:1px solid var(--border); border-radius:20px; text-align:center; padding:30px 20px; margin-bottom:22px; }
+    .amount-label { font-size:13px; font-weight:700; letter-spacing:.6px; color:var(--text-secondary); text-transform:uppercase; }
+    .amount-value { font-size:52px; font-weight:800; color:var(--primary); margin:10px 0 8px; letter-spacing:-1px; }
+    .amount-note { font-size:13.5px; font-weight:700; color:#15803D; }
+
+    .patient-row { display:flex; align-items:center; gap:14px; }
+    .p-avatar { width:50px; height:50px; border-radius:50%; background:#E0F2FE; color:#0284C7; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; }
+    .p-name { font-size:17px; font-weight:800; }
+    .p-name small { font-size:13px; font-weight:normal; color:var(--text-secondary); }
+    .p-addr { font-size:13px; color:var(--text-secondary); margin-top:3px; }
+    .detail-list { margin-top:20px; border-top:1px solid var(--border); padding-top:16px; display:grid; gap:10px; font-size:14px; }
+    .detail-list div { display:flex; justify-content:space-between; gap:12px; }
+    .detail-list span:first-child { color:var(--text-secondary); }
+    .detail-list span:last-child { font-weight:700; text-align:right; }
+
+    .panel h3 { font-size:18px; font-weight:800; margin-bottom:6px; }
+    .panel .sub { font-size:13.5px; color:var(--text-secondary); margin-bottom:20px; }
+    .mode-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    @media (max-width:560px) { .mode-grid { grid-template-columns:1fr; } }
+    .mode-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; padding:26px 12px; background:#fff; border:1.5px solid var(--border); border-radius:20px; font-size:15.5px; font-weight:700; color:var(--text-dark); cursor:pointer; transition:all .15s; }
+    .mode-btn .ico { font-size:30px; }
+    .mode-btn small { font-size:12px; font-weight:500; color:var(--text-secondary); }
+    .mode-btn:hover { border-color:var(--primary); background:var(--primary-light); transform:translateY(-2px); box-shadow:0 8px 20px rgba(20,155,158,.12); }
+    .mode-btn:focus-visible { outline:3px solid rgba(20,155,158,.4); outline-offset:2px; }
+
+    [hidden] { display:none !important; }
+    .center-wrap { flex:1; display:flex; align-items:center; justify-content:center; padding:40px 20px; }
+    .success-card { width:100%; max-width:560px; background:#fff; border:1px solid var(--border); border-radius:28px; padding:48px 40px 40px; text-align:center; box-shadow:0 8px 30px rgba(0,0,0,.05); }
+    .check-circle { width:96px; height:96px; border-radius:50%; background:#DCFCE7; color:#15803D; display:flex; align-items:center; justify-content:center; font-size:46px; margin:0 auto 22px; animation:pop .35s ease-out; }
+    @keyframes pop { from { transform:scale(.6); opacity:0; } to { transform:scale(1); opacity:1; } }
+    @media (prefers-reduced-motion: reduce) { .check-circle { animation:none; } }
+    .success-card h2 { font-size:28px; font-weight:800; letter-spacing:-.4px; }
+    .paid-amount { font-size:48px; font-weight:800; color:var(--primary); margin:8px 0 6px; letter-spacing:-1px; }
+    .via { font-size:15px; color:var(--text-secondary); }
+    .summary { margin:28px 0; background:#F8FAFC; border:1px solid var(--border); border-radius:18px; padding:18px 22px; display:grid; gap:10px; font-size:14px; text-align:left; }
+    .summary div { display:flex; justify-content:space-between; gap:12px; }
+    .summary span:first-child { color:var(--text-secondary); }
+    .summary span:last-child { font-weight:700; text-align:right; }
+    .btn-row { display:flex; gap:12px; }
+    .btn { flex:1; height:52px; border-radius:26px; font-size:15.5px; font-weight:700; cursor:pointer; text-decoration:none; display:flex; align-items:center; justify-content:center; }
+    .btn-fill { background:var(--primary); color:#fff; border:none; box-shadow:0 4px 12px rgba(20,155,158,.3); }
+    .btn-fill:hover { background:var(--primary-dark); }
+    .btn-outline { background:#fff; color:var(--primary); border:1.5px solid var(--primary); }
+    .btn-outline:hover { background:var(--primary-light); }
+    @media (max-width:560px) { .btn-row { flex-direction:column; } .success-card { padding:36px 22px 28px; } }
+    @media print { .portal-navbar, .btn-row { display:none; } body { background:#fff; } .success-card { box-shadow:none; } }
+  </style>
+</head>
+<body>
+
+  <header class="portal-navbar">
+    <a href="/home" class="brand">
+      <div class="brand-icon">+</div>
+      <div><h1>MedReach</h1><span>Diagnostics Field Suite</span></div>
+    </a>
+    <div class="nav-right">
+      <a href="/notifications" class="bell"><span>🔔</span><i></i></a>
+      <a href="/profile" class="user">
+        <div class="avatar">AP</div>
+        <div>
+          <div style="font-size:13px;font-weight:800;">Ashok Pandian</div>
+          <div style="font-size:11px;color:var(--text-secondary);">EMP-8842 • Field Lead</div>
+        </div>
+      </a>
+    </div>
+  </header>
+
+  <main class="page" id="paymentView">
+    <div class="page-head">
+      <a href="/patient-detail" id="backLink" class="back-btn" aria-label="Back">←</a>
+      <div>
+        <h2>Collect Payment</h2>
+        <div class="crumbs">Dashboard › Patient Detail › Collect Payment</div>
+      </div>
+    </div>
+
+    <div class="layout">
+      <!-- Left: amount + patient summary -->
+      <section class="panel">
+        <div class="amount-box">
+          <div class="amount-label">Total payable amount</div>
+          <div class="amount-value" id="amountText">₹988.00</div>
+          <div class="amount-note">Includes home collection fee</div>
+        </div>
+
+        <div class="patient-row">
+          <div class="p-avatar">👤</div>
+          <div>
+            <div class="p-name"><span id="pName">Priya Venkatesh</span> <small id="pDemo">(32 Yrs / Female)</small></div>
+            <div class="p-addr" id="pAddr">Flat 4/B, Sunrise Apartments, Koramangala 5th Block, Bengaluru</div>
+          </div>
+        </div>
+
+        <div class="detail-list">
+          <div><span>Task ID</span><span id="pId">TK-209312</span></div>
+          <div><span>Assays</span><span id="pAssays">CBC + Thyroid Profile</span></div>
+          <div><span>Scheduled time</span><span id="pTime">09:30 AM</span></div>
+        </div>
+      </section>
+
+      <!-- Right: payment modes -->
+      <section class="panel">
+        <h3>Select Payment Mode</h3>
+        <p class="sub">Choose how the patient is paying. You will see a confirmation on the next page.</p>
+        <div class="mode-grid">
+          <button type="button" class="mode-btn" data-method="Cash"><span class="ico">💵</span>Cash Payment<small>Collect cash at the door</small></button>
+          <button type="button" class="mode-btn" data-method="UPI / QR Code"><span class="ico">📱</span>UPI / QR Code<small>Patient scans and pays</small></button>
+          <button type="button" class="mode-btn" data-method="Card (POS Terminal)"><span class="ico">💳</span>Card (POS Terminal)<small>Swipe or tap the card</small></button>
+          <button type="button" class="mode-btn" data-method="Due Bill (Lab Account)"><span class="ico">📝</span>Due Bill (Lab Account)<small>Add to the lab account</small></button>
+        </div>
+      </section>
+    </div>
+
+  </main>
+
+  <!-- SUCCESS VIEW (shown after a payment mode is clicked) -->
+  <main class="center-wrap" id="successView" hidden>
+    <section class="success-card">
+      <div class="check-circle">✓</div>
+      <h2>Payment Successful!</h2>
+      <div class="paid-amount" id="sAmount">₹988.00</div>
+      <div class="via" id="viaText">Received via Cash</div>
+
+      <div class="summary">
+        <div><span>Task ID</span><span id="sId">TK-209312</span></div>
+        <div><span>Payment mode</span><span id="sMethod">Cash</span></div>
+        <div><span>Received at</span><span id="sTime"></span></div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-outline" onclick="window.print()">Print Receipt</button>
+        <a href="/home" class="btn btn-fill">Back to Home</a>
+      </div>
+    </section>
+  </main>
+
+<script>
+  /* Reads ?id=... & amount=... from the address bar; falls back to the sample patient. */
+  const params = new URLSearchParams(location.search);
+  const patient = {
+    id: params.get('id') || 'TK-209312',
+    name: params.get('name') || 'Priya Venkatesh',
+    demo: params.get('demo') || '(32 Yrs / Female)',
+    address: params.get('address') || 'Flat 4/B, Sunrise Apartments, Koramangala 5th Block, Bengaluru',
+    assays: params.get('assays') || 'CBC + Thyroid Profile',
+    time: params.get('time') || '09:30 AM',
+    amount: Number(params.get('amount')) || 988
+  };
+
+  const money = n => '₹' + n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  document.getElementById('amountText').textContent = money(patient.amount);
+  document.getElementById('pName').textContent = patient.name;
+  document.getElementById('pDemo').textContent = patient.demo;
+  document.getElementById('pAddr').textContent = patient.address;
+  document.getElementById('pId').textContent = patient.id;
+  document.getElementById('pAssays').textContent = patient.assays;
+  document.getElementById('pTime').textContent = patient.time;
+  document.getElementById('backLink').href = '/patient-detail?id=' + encodeURIComponent(patient.id);
+
+  
+  function showPaymentSuccess(method) {
+    document.getElementById('sAmount').textContent = money(patient.amount);
+    document.getElementById('viaText').textContent = 'Received via ' + method;
+    document.getElementById('sMethod').textContent = method;
+    document.getElementById('sId').textContent = patient.id;
+    document.getElementById('sTime').textContent = new Date().toLocaleString('en-IN', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+
+    document.getElementById('paymentView').hidden = true;
+    document.getElementById('successView').hidden = false;
+    document.title = 'Payment Successful - MedReach Diagnostics Field Portal';
+    window.scrollTo(0, 0);
+  }
+
+  document.querySelectorAll('.mode-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () { showPaymentSuccess(btn.dataset.method); });
+  });
+</script>
+</body>
+</html>

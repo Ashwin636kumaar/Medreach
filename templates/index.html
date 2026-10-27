@@ -1,0 +1,1652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>MedReach Diagnostics Field Suite</title>
+  <link rel="icon" href="static\images\favicon.svg" type="image/svg+xml">
+  <style>
+
+    :root {
+      --primary: #149B9E;
+      --primary-dark: #0E7F82;
+      --primary-light: #E3F5F4;
+      --primary-bg: #E6F7F5;
+      --surface: #FFFFFF;
+      --surface-border: #E2E8F0;
+      --text-dark: #0F172A;
+      --text-primary: #1E293B;
+      --text-secondary: #64748B;
+      --text-muted: #94A3B8;
+      --accent-green: #10B981;
+      --accent-red: #EF4444;
+      --accent-gold: #FDE047;
+      --accent-blue: #3B82F6;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: #0B192C; /* Contrast desktop background to spotlight the app */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    /* Outer Phone Container */
+    .app-phone-container {
+      width: 100%;
+      max-width: 412px;
+      height: 100%;
+      max-height: 860px;
+      background: var(--primary-bg);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.1);
+      border-radius: 36px;
+    }
+
+    @media (max-width: 480px) {
+      .app-phone-container {
+        max-width: 100%;
+        max-height: 100%;
+        border-radius: 0;
+        box-shadow: none;
+      }
+    }
+
+    /* Android 14 Status Bar */
+    .phone-status-bar {
+      height: 38px;
+      padding: 8px 20px 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-dark);
+      background: transparent;
+      z-index: 100;
+      flex-shrink: 0;
+    }
+
+    .phone-status-bar.dark-mode {
+      color: #FFFFFF !important;
+    }
+
+    /* Screen Canvas */
+    .screen-viewport {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      position: relative;
+      background: var(--primary-bg);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .screen-viewport::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* Screen Base Rule - ONLY ACTIVE SCREEN IS SHOWN */
+    .app-screen {
+      display: none;
+      width: 100%;
+      min-height: 100%;
+      flex-direction: column;
+      animation: screenFade 0.2s ease-out;
+    }
+
+    .app-screen.active {
+      display: flex !important;
+    }
+
+    @keyframes screenFade {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ---------------------------------------------------- */
+    /* SCREEN 0: LOGIN                                      */
+    /* ---------------------------------------------------- */
+    .screen-login-wrapper {
+      padding: 20px 20px 28px 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 100%;
+      background: var(--primary-bg);
+    }
+
+    .login-brand-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 10px;
+      margin-bottom: 20px;
+    }
+
+    .medical-badge-circle {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #FFFFFF;
+      font-size: 34px;
+      font-weight: 800;
+      margin-bottom: 12px;
+      box-shadow: 0 6px 18px rgba(20, 155, 158, 0.35);
+    }
+
+    .brand-title-box {
+      font-size: 30px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .brand-title-box .med { color: var(--text-dark); }
+    .brand-title-box .reach { color: var(--primary); }
+
+    .brand-sub-box {
+      font-size: 14.5px;
+      color: #5B757B;
+      margin-top: 3px;
+    }
+
+    .login-white-card {
+      background: var(--surface);
+      border-radius: 28px;
+      padding: 26px 20px;
+      box-shadow: 0 10px 25px rgba(7, 59, 58, 0.08);
+    }
+
+    .login-white-card h2 {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-dark);
+      letter-spacing: -0.3px;
+    }
+
+    .login-white-card p {
+      font-size: 13.5px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+      margin-bottom: 20px;
+    }
+
+    .field-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+
+    .field-input-box {
+      display: flex;
+      align-items: center;
+      background: var(--surface);
+      border: 1.5px solid var(--surface-border);
+      border-radius: 14px;
+      padding: 12px 14px;
+      gap: 10px;
+      margin-bottom: 16px;
+      transition: border-color 0.2s;
+    }
+
+    .field-input-box:focus-within {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(20, 155, 158, 0.15);
+    }
+
+    .field-input-box input {
+      border: none;
+      background: transparent;
+      outline: none;
+      flex: 1;
+      font-size: 14px;
+      color: var(--text-dark);
+    }
+
+    .btn-login-teal {
+      width: 100%;
+      height: 52px;
+      background: var(--primary);
+      border-radius: 26px;
+      color: #FFFFFF;
+      border: none;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 6px 16px rgba(20, 155, 158, 0.35);
+      transition: background 0.15s, transform 0.05s;
+    }
+
+    .btn-login-teal:hover { background: var(--primary-dark); }
+    .btn-login-teal:active { transform: scale(0.98); }
+
+    .login-disclaimer {
+      font-size: 11px;
+      color: #688A90;
+      text-align: center;
+      line-height: 16px;
+      margin-top: 20px;
+    }
+
+  
+    .screen-home-wrapper {
+      padding: 14px 16px 80px 16px;
+      background: var(--primary-bg);
+      flex: 1;
+    }
+
+    .home-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .home-avatar-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+
+    .avatar-yellow {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--accent-gold);
+      color: #854D0E;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 16px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    }
+
+    .bell-btn-circle {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .bell-red-badge {
+      position: absolute;
+      top: 10px;
+      right: 11px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-red);
+    }
+
+    /* TODAY'S COLLECTION Teal Banner */
+    .collection-banner-teal {
+      background: var(--primary);
+      border-radius: 24px;
+      padding: 18px;
+      color: #FFFFFF;
+      margin-bottom: 14px;
+      box-shadow: 0 8px 22px rgba(20, 155, 158, 0.32);
+    }
+
+    .banner-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .banner-title-text {
+      font-size: 11.5px;
+      letter-spacing: 1.2px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .banner-date-pill {
+      background: rgba(255, 255, 255, 0.22);
+      padding: 4px 12px;
+      border-radius: 14px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .banner-main-stats {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .banner-big-count {
+      background: rgba(255, 255, 255, 0.22);
+      padding: 8px 24px;
+      border-radius: 16px;
+      font-size: 28px;
+      font-weight: 800;
+    }
+
+    .banner-temp-box {
+      background: rgba(255, 255, 255, 0.22);
+      padding: 8px 16px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .tube-pills-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .tube-col {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      padding: 7px 4px;
+      text-align: center;
+    }
+
+    .tube-count-bold {
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    .tube-label-sub {
+      font-size: 9.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      opacity: 0.95;
+      margin-top: 1px;
+    }
+
+    /* 3 Stat Cards */
+    .three-stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .stat-pill-card {
+      background: var(--surface);
+      border-radius: 18px;
+      padding: 12px 6px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    .stat-pill-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      margin: 0 auto 4px auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+    }
+
+    .stat-pill-val {
+      font-size: 16.5px;
+      font-weight: 800;
+      color: var(--text-dark);
+    }
+
+    .stat-pill-desc {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    /* Tabs */
+    .tab-segment-bar {
+      display: flex;
+      background: #DDEEEB;
+      border-radius: 24px;
+      padding: 4px;
+      margin-bottom: 12px;
+    }
+
+    .tab-segment-btn {
+      flex: 1;
+      border: none;
+      background: transparent;
+      padding: 9px 0;
+      border-radius: 20px;
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .tab-segment-btn.active {
+      background: var(--primary);
+      color: #FFFFFF;
+      box-shadow: 0 2px 6px rgba(20, 155, 158, 0.3);
+    }
+
+    /* Search Bar */
+    .home-search-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .search-box-white {
+      flex: 1;
+      background: var(--surface);
+      border-radius: 20px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+    }
+
+    .search-box-white input {
+      border: none;
+      background: transparent;
+      outline: none;
+      flex: 1;
+      font-size: 13.5px;
+    }
+
+    /* Patient Card */
+    .patient-card-box {
+      background: var(--surface);
+      border-radius: 24px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    }
+
+    .patient-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .patient-identity {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .patient-blue-avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: #E0F2FE;
+      color: #0284C7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+
+    .patient-title-bold {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--text-dark);
+    }
+
+    .patient-address-sub {
+      font-size: 11.5px;
+      color: var(--text-secondary);
+      margin-top: 1px;
+      max-width: 220px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .patient-call-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: #F1F5F9;
+      border: 1px solid #E2E8F0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      color: var(--primary);
+      cursor: pointer;
+    }
+
+    .patient-tags-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 14px;
+    }
+
+    .paid-tag-green {
+      background: #DCFCE7;
+      color: #15803D;
+      padding: 3px 8px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .patient-btn-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-cancel-red {
+      flex: 1;
+      height: 40px;
+      border-radius: 20px;
+      border: 1.5px solid #F87171;
+      background: #FFFFFF;
+      color: #EF4444;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-navigate-teal {
+      flex: 1.5;
+      height: 40px;
+      border-radius: 20px;
+      border: none;
+      background: var(--primary);
+      color: #FFFFFF;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    /* FAB Button */
+    .fab-add-btn {
+      position: absolute;
+      right: 20px;
+      bottom: 24px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #FFFFFF;
+      border: none;
+      font-size: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(20, 155, 158, 0.45);
+      z-index: 100;
+    }
+
+    /* ---------------------------------------------------- */
+    /* SUB-SCREEN TOP HEADER                                */
+    /* ---------------------------------------------------- */
+    .subscreen-header {
+      height: 54px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--surface-border);
+      flex-shrink: 0;
+    }
+
+    .back-arrow-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: none;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: var(--text-dark);
+      cursor: pointer;
+    }
+
+    .subscreen-title {
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--text-dark);
+    }
+
+  
+    .patient-detail-body {
+      padding: 16px;
+      background: #F8FAFC;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .patient-info-box-green {
+      background: var(--surface);
+      border: 1px solid #BBF7D0;
+      border-radius: 20px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+
+    .test-specimen-card {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 10px;
+    }
+
+  
+    .center-form-body {
+      padding: 16px;
+      background: var(--surface);
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .center-field-group {
+      margin-bottom: 16px;
+    }
+
+    .center-select {
+      width: 100%;
+      background: var(--surface);
+      border: 1.5px solid var(--surface-border);
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-size: 13.5px;
+      color: var(--text-dark);
+      outline: none;
+    }
+
+    .input-fetch-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .input-fetch-row input {
+      flex: 1;
+      background: #F8FAFC;
+      border: 1.5px solid var(--surface-border);
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-size: 14px;
+      outline: none;
+      color: var(--text-dark);
+    }
+
+    .btn-fetch-blue {
+      background: #CCFBF1;
+      color: #0F766E;
+      border: none;
+      border-radius: 14px;
+      padding: 0 20px;
+      font-size: 13.5px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-scan-pill {
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      border: none;
+      border-radius: 14px;
+      padding: 0 18px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+  
+    .scanner-full-view {
+      background: #000000;
+      flex: 1;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .scanner-camera-video {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 1;
+    }
+
+    .scanner-overlay-lens {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.32);
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding-bottom: 24px;
+    }
+
+    .viewfinder-reticle {
+      align-self: center;
+      width: 260px;
+      height: 180px;
+      position: relative;
+      margin-top: 70px;
+    }
+
+    .corner-bracket {
+      position: absolute;
+      width: 34px;
+      height: 34px;
+      border-color: #FFFFFF;
+      border-style: solid;
+    }
+
+    .corner-tl { top: 0; left: 0; border-width: 4px 0 0 4px; border-top-left-radius: 14px; }
+    .corner-tr { top: 0; right: 0; border-width: 4px 4px 0 0; border-top-right-radius: 14px; }
+    .corner-bl { bottom: 0; left: 0; border-width: 0 0 4px 4px; border-bottom-left-radius: 14px; }
+    .corner-br { bottom: 0; right: 0; border-width: 0 4px 4px 0; border-bottom-right-radius: 14px; }
+
+    .laser-scan-line {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      height: 2.5px;
+      background: #EF4444;
+      box-shadow: 0 0 8px #EF4444;
+      border-radius: 2px;
+      animation: laserAnim 2s infinite ease-in-out;
+    }
+
+    @keyframes laserAnim {
+      0% { top: 12px; }
+      50% { top: 165px; }
+      100% { top: 12px; }
+    }
+
+    .floating-badge-tag {
+      background: rgba(15, 23, 42, 0.82);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 16px;
+      padding: 10px 20px;
+      align-self: center;
+      text-align: center;
+      color: #FFFFFF;
+      margin-top: 24px;
+    }
+
+    .scanner-footer-bar {
+      background: #FFFFFF;
+      border-radius: 28px 28px 0 0;
+      padding: 18px 20px 20px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 10;
+    }
+
+    .btn-scanner-action {
+      flex: 1;
+      height: 52px;
+      border-radius: 26px;
+      background: #0D9488;
+      color: #FFFFFF;
+      font-size: 15px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-scanner-action:disabled {
+      background: #0F766E;
+      opacity: 0.65;
+    }
+
+    .btn-scanner-close {
+      width: 52px;
+      height: 52px;
+      border-radius: 26px;
+      background: #FFFFFF;
+      border: 1.5px solid #E2E8F0;
+      font-size: 18px;
+      color: #475569;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Authentic Mobile App Frame -->
+  <div class="app-phone-container">
+
+    <!-- Top Status Bar (Android 14) -->
+    <div class="phone-status-bar" id="appStatusBar">
+      <span id="statusBarClock">09:41</span>
+      <div style="display: flex; gap: 6px; font-size: 11px;">
+        <span>5G</span>
+        <span>📶</span>
+        <span>🔋 100%</span>
+      </div>
+    </div>
+
+    <!-- Main Screen Viewport Container -->
+    <div class="screen-viewport" id="appScreenViewport">
+
+    
+      <div id="screen-login" class="app-screen screen-login-wrapper active">
+        <!-- Top Branding Section -->
+        <div class="login-brand-header">
+          <div class="medical-badge-circle">+</div>
+          <div class="brand-title-box">
+            <span class="med">Med</span><span class="reach">Reach</span>
+          </div>
+          <div class="brand-sub-box">Diagnostics field suite</div>
+        </div>
+
+        <!-- Main White Login Card -->
+        <div class="login-white-card">
+          <h2>Welcome Back</h2>
+          <p>Sign in to continue your field operations</p>
+
+          <form onsubmit="handleLoginSubmit(event)">
+            <label class="field-label">Mobile No / Email ID</label>
+            <div class="field-input-box">
+              <span style="color: var(--primary);">📞</span>
+              <input type="text" id="loginIdentifier" value="ashok.field@medreach.com" required placeholder="Enter mobile number / email id">
+            </div>
+
+            <label class="field-label">Password</label>
+            <div class="field-input-box">
+              <span style="color: var(--primary);">🔒</span>
+              <input type="password" id="loginPassword" value="password123" required placeholder="Enter password">
+              <span style="cursor: pointer;" onclick="togglePasswordVisibility()">👁️</span>
+            </div>
+
+            <a href="javascript:void(0)" onclick="goToScreen('FORGOT_PASSWORD')" style="font-size: 13px; font-weight: 600; color: var(--primary); text-decoration: none; display: block; text-align: right; margin-bottom: 20px;">
+              Forgot Password?
+            </a>
+
+            <button type="submit" class="btn-login-teal">
+              Login
+            </button>
+          </form>
+        </div>
+
+        <div class="login-disclaimer">
+          Authorized field executives only. For access, contact your lab administrator.
+        </div>
+      </div>
+
+      <div id="screen-home" class="app-screen screen-home-wrapper">
+        <!-- User Avatar & Notification Bell -->
+        <div class="home-header-row">
+          <div class="home-avatar-info" onclick="goToScreen('PROFILE')">
+            <div class="avatar-yellow">AP</div>
+            <div>
+              <div style="font-size: 12px; color: var(--text-secondary);">Good Morning,</div>
+              <div style="font-size: 16px; font-weight: 800; color: var(--text-dark);">Ashok Pandian</div>
+            </div>
+          </div>
+          <button class="bell-btn-circle" onclick="goToScreen('NOTIFICATION')">
+            <span>🔔</span>
+            <div class="bell-red-badge"></div>
+          </button>
+        </div>
+
+        <!-- TODAY'S COLLECTION Teal Banner -->
+        <div class="collection-banner-teal">
+          <div class="banner-top-row">
+            <span class="banner-title-text">TODAY'S COLLECTION</span>
+            <div class="banner-date-pill">Jul 01 - Jul 23</div>
+          </div>
+
+          <div class="banner-main-stats">
+            <div class="banner-big-count">24</div>
+            <div class="banner-temp-box">
+              <span style="font-size: 16px;">❄️</span>
+              <div>
+                <div style="font-size: 10px; opacity: 0.9;">Temperature</div>
+                <div style="font-size: 15px; font-weight: 800;">-2°C</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="tube-pills-row" id="normalTubesRow">
+            <div class="tube-col"><div class="tube-count-bold">6</div><div class="tube-label-sub">EDTA</div></div>
+            <div class="tube-col"><div class="tube-count-bold">6</div><div class="tube-label-sub">Citrate</div></div>
+            <div class="tube-col"><div class="tube-count-bold">2</div><div class="tube-label-sub">Serum</div></div>
+            <div class="tube-col" style="cursor: pointer; background: rgba(255, 255, 255, 0.3);" onclick="toggleExpandTubes()">
+              <div class="tube-count-bold">+10 ▾</div><div class="tube-label-sub">More</div>
+            </div>
+          </div>
+
+          <div id="expandedTubesGrid" style="display: none; margin-top: 10px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+              <div class="tube-col"><div class="tube-count-bold">6</div><div class="tube-label-sub">EDTA</div></div>
+              <div class="tube-col"><div class="tube-count-bold">6</div><div class="tube-label-sub">Citrate</div></div>
+              <div class="tube-col"><div class="tube-count-bold">2</div><div class="tube-label-sub">Serum</div></div>
+              <div class="tube-col"><div class="tube-count-bold">4</div><div class="tube-label-sub">Fluoride</div></div>
+              <div class="tube-col"><div class="tube-count-bold">4</div><div class="tube-label-sub">Heparin</div></div>
+              <div class="tube-col"><div class="tube-count-bold">2</div><div class="tube-label-sub">Biopsy</div></div>
+            </div>
+            <div style="text-align: center; margin-top: 8px;">
+              <span style="font-size: 11px; font-weight: 700; cursor: pointer; text-decoration: underline;" onclick="toggleExpandTubes()">Show Less ▴</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3 Stats Cards -->
+        <div class="three-stats-grid">
+          <div class="stat-pill-card">
+            <div class="stat-pill-icon" style="background: #DCFCE7; color: #15803D;">✓</div>
+            <div class="stat-pill-val">18</div>
+            <div class="stat-pill-desc">Collected</div>
+          </div>
+          <div class="stat-pill-card">
+            <div class="stat-pill-icon" style="background: #FEF3C7; color: #B45309;">⏱️</div>
+            <div class="stat-pill-val">6</div>
+            <div class="stat-pill-desc">Pending</div>
+          </div>
+          <div class="stat-pill-card">
+            <div class="stat-pill-icon" style="background: #E0F2FE; color: #0284C7;">📍</div>
+            <div class="stat-pill-val">12.4</div>
+            <div class="stat-pill-desc">Route KMs</div>
+          </div>
+        </div>
+
+        <!-- Pending / Completed Tabs -->
+        <div class="tab-segment-bar">
+          <button id="tabPendingBtn" class="tab-segment-btn active" onclick="switchHomeTab('pending')">Pending (8)</button>
+          <button id="tabCompletedBtn" class="tab-segment-btn" onclick="switchHomeTab('completed')">Completed (12)</button>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="home-search-bar">
+          <div class="search-box-white">
+            <span>🔍</span>
+            <input type="text" placeholder="Search patient name, location..." oninput="filterPatients(this.value)">
+          </div>
+          <button style="width: 44px; height: 44px; border-radius: 50%; background: var(--surface); border: none; font-size: 16px; cursor: pointer;">⚙️</button>
+        </div>
+
+        <!-- Patient Cards List -->
+        <div id="patientCardsContainer">
+          <!-- Card 1: Priya Venkatesh -->
+          <div class="patient-card-box">
+            <div class="patient-card-header">
+              <div class="patient-identity" onclick="goToScreen('PATIENT_DETAIL')" style="cursor: pointer;">
+                <div class="patient-blue-avatar">👤</div>
+                <div>
+                  <div class="patient-title-bold">Priya Venkatesh</div>
+                  <div class="patient-address-sub">4/B, Koramangala 5th block, Bengaluru</div>
+                </div>
+              </div>
+              <button class="patient-call-btn" onclick="alert('Calling patient: +91 98765 43210')">📞</button>
+            </div>
+            <div class="patient-tags-row">
+              <span>🕒 09:30 AM</span>
+              <span>•</span>
+              <span>📍 1.2km</span>
+              <span>•</span>
+              <span class="paid-tag-green">PAID</span>
+            </div>
+            <div class="patient-btn-row">
+              <button class="btn-cancel-red" onclick="goToScreen('REJECT_REASSIGN')">✕ Cancel</button>
+              <button class="btn-navigate-teal" onclick="goToScreen('PATIENT_DETAIL')">Navigate ➔</button>
+            </div>
+          </div>
+
+          <!-- Card 2: Rajesh Sharma -->
+          <div class="patient-card-box">
+            <div class="patient-card-header">
+              <div class="patient-identity" onclick="goToScreen('PATIENT_DETAIL')" style="cursor: pointer;">
+                <div class="patient-blue-avatar">👤</div>
+                <div>
+                  <div class="patient-title-bold">Rajesh Sharma</div>
+                  <div class="patient-address-sub">Flat 302, Green Glen Layout, Bellandur</div>
+                </div>
+              </div>
+              <button class="patient-call-btn" onclick="alert('Calling patient: +91 98451 22334')">📞</button>
+            </div>
+            <div class="patient-tags-row">
+              <span>🕒 10:15 AM</span>
+              <span>•</span>
+              <span>📍 2.4km</span>
+              <span>•</span>
+              <span style="background: #FEF3C7; color: #B45309; padding: 3px 8px; border-radius: 8px; font-size: 11px; font-weight: 700;">CASH</span>
+            </div>
+            <div class="patient-btn-row">
+              <button class="btn-cancel-red" onclick="goToScreen('REJECT_REASSIGN')">✕ Cancel</button>
+              <button class="btn-navigate-teal" onclick="goToScreen('PATIENT_DETAIL')">Navigate ➔</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Right FAB for Center Collection -->
+        <button class="fab-add-btn" onclick="goToScreen('CENTER_COLLECTION')">
+          +
+        </button>
+      </div>
+
+     
+      <div id="screen-patient_detail" class="app-screen">
+        <div class="subscreen-header">
+          <button class="back-arrow-btn" onclick="goToScreen('HOME')">←</button>
+          <div class="subscreen-title">Patient Collection</div>
+        </div>
+
+        <div class="patient-detail-body">
+          <div class="patient-info-box-green">
+            <div style="font-size: 17px; font-weight: 800; color: var(--text-dark);">Priya Venkatesh</div>
+            <div style="font-size: 12px; color: var(--text-secondary); margin-top: 3px;">4/B, Koramangala 5th block, Bengaluru</div>
+            <div style="font-size: 11.5px; font-weight: 700; color: var(--primary); margin-top: 6px;">32 Yrs • Female • +91 98765 43210</div>
+          </div>
+
+          <div style="background: #E0F2FE; padding: 10px 14px; border-radius: 14px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between;">
+            <span style="font-size: 12.5px; font-weight: 700; color: #0369A1;">❄️ Container Temperature</span>
+            <span style="font-size: 14px; font-weight: 800; color: #0284C7;">-2.0°C</span>
+          </div>
+
+          <div style="font-size: 13.5px; font-weight: 700; color: var(--text-dark); margin-bottom: 10px;">Prescribed Test Groups:</div>
+
+          <div class="test-specimen-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span style="font-size: 13.5px; font-weight: 700; color: var(--text-dark);">Complete Blood Count (CBC)</span>
+              <span style="font-size: 11px; font-weight: 700; background: #EDE9FE; color: #7C3AED; padding: 2px 8px; border-radius: 8px;">EDTA - Lavender</span>
+            </div>
+            <div style="font-size: 12px; color: var(--text-secondary);">Hemoglobin • RBC Count • Platelet Count • WBC Differential</div>
+          </div>
+
+          <div class="test-specimen-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span style="font-size: 13.5px; font-weight: 700; color: var(--text-dark);">Thyroid Profile - Total</span>
+              <span style="font-size: 11px; font-weight: 700; background: #FEE2E2; color: #DC2626; padding: 2px 8px; border-radius: 8px;">Serum - Red Top</span>
+            </div>
+            <div style="font-size: 12px; color: var(--text-secondary);">Total T3 • Total T4 • TSH Ultrasensitive</div>
+          </div>
+
+          <!-- Associate Barcode -->
+          <div style="margin-top: 14px;">
+            <label class="field-label">Associated Blood Sample Barcode</label>
+            <div style="display: flex; gap: 8px;">
+              <input type="text" id="patientBarcodeField" placeholder="Scan or enter tube barcode" style="flex: 1; background: var(--surface); border: 1.5px solid var(--surface-border); border-radius: 14px; padding: 12px 14px; font-size: 14px; outline: none;">
+              <button type="button" class="btn-scan-pill" onclick="openScannerScreen('patient')">📷 Scan</button>
+            </div>
+            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 5px;">Scan sample vial with camera to link specimen to patient.</div>
+          </div>
+
+          <button type="button" class="btn-login-teal" onclick="goToScreen('COLLECT_PAYMENT')" style="margin-top: 20px;">
+            Associate Reference & Collect
+          </button>
+
+          <button type="button" class="btn-cancel-red" onclick="goToScreen('REJECT_REASSIGN')" style="width: 100%; height: 48px; border-radius: 24px; margin-top: 10px;">
+            ✕ Reject / Reassign Task
+          </button>
+        </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- SCREEN 7: REJECT / REASSIGN TASK               -->
+      <!-- ============================================== -->
+      <div id="screen-reject_reassign" class="app-screen">
+        <div class="subscreen-header">
+          <button class="back-arrow-btn" onclick="goToScreen('PATIENT_DETAIL')">←</button>
+          <div class="subscreen-title">Reject / Reassign Task</div>
+        </div>
+
+        <div style="padding: 16px; flex: 1; background: var(--surface); overflow-y: auto;">
+          <div style="font-size: 14px; font-weight: 700; color: var(--text-dark); margin-bottom: 14px;">
+            Select Reason for Rejection:
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <label style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; color: var(--text-dark); cursor: pointer;">
+              <input type="radio" name="rejectReason" value="Patient not available at home" checked style="accent-color: var(--primary);">
+              Patient not available at home
+            </label>
+            <label style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; color: var(--text-dark); cursor: pointer;">
+              <input type="radio" name="rejectReason" value="Patient refused sample collection" style="accent-color: var(--primary);">
+              Patient refused sample collection
+            </label>
+            <label style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; color: var(--text-dark); cursor: pointer;">
+              <input type="radio" name="rejectReason" value="Wrong address / unreachable" style="accent-color: var(--primary);">
+              Wrong address / phone unreachable
+            </label>
+            <label style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; color: var(--text-dark); cursor: pointer;">
+              <input type="radio" name="rejectReason" value="Fasting requirement not met" style="accent-color: var(--primary);">
+              Fasting requirement not met by patient
+            </label>
+            <label style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; color: var(--text-dark); cursor: pointer;">
+              <input type="radio" name="rejectReason" value="Sample collection postponed" style="accent-color: var(--primary);">
+              Sample collection postponed by patient
+            </label>
+          </div>
+
+          <button type="button" class="btn-login-teal" style="background: #EF4444; margin-top: 30px;" onclick="confirmTaskRejection()">
+            Confirm Rejection
+          </button>
+        </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- SCREEN 3: COLLECT PAYMENT                      -->
+      <!-- ============================================== -->
+      <div id="screen-collect_payment" class="app-screen">
+        <div class="subscreen-header">
+          <button class="back-arrow-btn" onclick="goToScreen('PATIENT_DETAIL')">←</button>
+          <div class="subscreen-title">Collect Payment</div>
+        </div>
+
+        <div style="padding: 20px; flex: 1; background: var(--surface);">
+          <div style="background: #F8FAFC; border-radius: 20px; padding: 20px; text-align: center; border: 1px solid var(--surface-border); margin-bottom: 24px;">
+            <div style="font-size: 12px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Total Payable Amount</div>
+            <div style="font-size: 34px; font-weight: 800; color: var(--primary); margin: 6px 0;">₹988.00</div>
+            <div style="font-size: 12px; color: #166534; font-weight: 700;">Includes home collection fee</div>
+          </div>
+
+          <div style="font-size: 14px; font-weight: 700; color: var(--text-dark); margin-bottom: 12px;">Select Payment Mode:</div>
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <button class="btn-login-teal" style="background: #FFFFFF; color: var(--text-dark); border: 1.5px solid var(--surface-border); box-shadow: none;" onclick="goToPaymentSuccess('Cash')">
+              💵 Cash Payment
+            </button>
+            <button class="btn-login-teal" style="background: #FFFFFF; color: var(--text-dark); border: 1.5px solid var(--surface-border); box-shadow: none;" onclick="goToPaymentSuccess('UPI / QR')">
+              📱 UPI / QR Code
+            </button>
+            <button class="btn-login-teal" style="background: #FFFFFF; color: var(--text-dark); border: 1.5px solid var(--surface-border); box-shadow: none;" onclick="goToPaymentSuccess('Card')">
+              💳 Card (POS Terminal)
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- SCREEN 4: PAYMENT SUCCESS                      -->
+      <!-- ============================================== -->
+      <div id="screen-payment_success" class="app-screen" style="background: var(--surface); align-items: center; justify-content: center; padding: 24px; text-align: center;">
+        <div style="width: 76px; height: 76px; border-radius: 50%; background: #DCFCE7; color: #15803D; font-size: 38px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+          ✓
+        </div>
+        <div style="font-size: 22px; font-weight: 800; color: var(--text-dark); margin-bottom: 4px;">Payment Successful!</div>
+        <div style="font-size: 32px; font-weight: 800; color: var(--primary); margin-bottom: 6px;">₹988.00</div>
+        <div id="paymentModeReceivedText" style="font-size: 13px; color: var(--text-secondary); margin-bottom: 30px;">Received via Cash</div>
+
+        <button class="btn-login-teal" onclick="goToScreen('HOME')" style="width: 80%;">
+          Back to Home
+        </button>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- SCREEN 8: CENTER COLLECTION (LIMS BATCH)       -->
+      <!-- ============================================== -->
+      <div id="screen-center_collection" class="app-screen">
+        <div class="subscreen-header">
+          <button class="back-arrow-btn" onclick="goToScreen('HOME')">←</button>
+          <div class="subscreen-title">Center Collection</div>
+        </div>
+
+        <div class="center-form-body">
+          <div class="center-field-group">
+            <label class="field-label">Processing center</label>
+            <select class="center-select">
+              <option>MedReach Central Processing Lab - Koramangala</option>
+              <option>MedReach Bio-Reference Center - Whitefield</option>
+            </select>
+          </div>
+
+          <div class="center-field-group">
+            <label class="field-label">Collection center</label>
+            <select class="center-select">
+              <option>Indiranagar Collection Clinic - 100ft Road</option>
+              <option>HSR Layout Diagnostic Point - Sector 2</option>
+              <option>Jayanagar Health Point - 4th Block</option>
+            </select>
+          </div>
+
+          <div class="center-field-group">
+            <label class="field-label">Unique reference number</label>
+            <div class="input-fetch-row">
+              <input type="text" id="centerRefInput" value="RAM1001">
+              <button type="button" class="btn-scan-pill" onclick="openScannerScreen('center')">Scan</button>
+            </div>
+            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 5px;">Scan to associate a pre-printed barcode.</div>
+          </div>
+
+          <!-- BATCHSHEET BARCODE WITH FETCH BUTTON -->
+          <div class="center-field-group">
+            <label class="field-label">Batchsheet barcode</label>
+            <div class="input-fetch-row">
+              <input type="text" id="inputBatchsheetBarcode" placeholder="Enter batch sheet barcode">
+              <button type="button" class="btn-fetch-blue" onclick="handleBatchsheetFetch()">Fetch</button>
+            </div>
+            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 5px;" id="batchHelperText">
+              ⓘ Enter batchsheet barcode generated from the LIMS (Click Fetch to query system).
+            </div>
+          </div>
+
+          <div class="center-field-group">
+            <label class="field-label">No.of containers</label>
+            <input type="text" id="expectedContainersVal" placeholder="Null" readonly style="width: 100%; background: #F1F5F9; border: 1px solid var(--surface-border); border-radius: 14px; padding: 12px 14px; font-weight: 700; color: var(--text-dark);">
+          </div>
+
+          <div class="center-field-group">
+            <label class="field-label">Actual no.of containers</label>
+            <input type="number" id="actualContainersVal" value="4" style="width: 100%; background: #FFFFFF; border: 1.5px solid var(--surface-border); border-radius: 14px; padding: 12px 14px;">
+            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 5px;">Physically count sample vials in cold-chain box to prevent loss.</div>
+          </div>
+
+          <div style="display: flex; gap: 10px; margin-top: 24px; padding-bottom: 20px;">
+            <button type="button" class="btn-cancel-red" style="height: 48px; border-radius: 24px;" onclick="goToScreen('HOME')">Back</button>
+            <button type="button" class="btn-login-teal" style="flex: 1.5;" onclick="saveCenterBatch()">Save</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- SCREEN 9: BARCODE SCANNER (GOOGLE LENS)        -->
+      <!-- ============================================== -->
+      <div id="screen-barcode_scanner" class="app-screen scanner-full-view">
+        <video id="liveCameraVideo" class="scanner-camera-video" autoplay playsinline muted></video>
+
+        <div class="scanner-overlay-lens">
+          <div class="viewfinder-reticle">
+            <div class="corner-bracket corner-tl"></div>
+            <div class="corner-bracket corner-tr"></div>
+            <div class="corner-bracket corner-bl"></div>
+            <div class="corner-bracket corner-br"></div>
+            <div class="laser-scan-line"></div>
+          </div>
+
+          <div class="floating-badge-tag">
+            <div style="font-size: 10px; letter-spacing: 1.2px; font-weight: 700; color: #CBD5E1; margin-bottom: 3px;">BARCODE NUMBER</div>
+            <div id="scannerDetectedNumber" style="font-size: 16px; font-weight: 700; color: #FFFFFF;">Align barcode in frame...</div>
+          </div>
+
+          <div style="display: flex; justify-content: center; margin-bottom: 12px;">
+            <button type="button" onclick="simulateBarcodeTrigger()" style="background: rgba(255, 255, 255, 0.22); border: 1px solid rgba(255, 255, 255, 0.4); color: white; padding: 6px 14px; border-radius: 20px; font-size: 11.5px; cursor: pointer;">
+              ⚡ Simulate Barcode Scan
+            </button>
+          </div>
+
+          <div class="scanner-footer-bar">
+            <button type="button" id="btnConfirmBarcode" class="btn-scanner-action" disabled onclick="confirmScannedCode()">
+              <span>🏷️</span> Fetch Reference No
+            </button>
+            <button type="button" class="btn-scanner-close" onclick="closeScannerScreen()">
+              ✕
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- SCREEN 5: NOTIFICATIONS                        -->
+      <!-- ============================================== -->
+      <div id="screen-notification" class="app-screen">
+        <div class="subscreen-header">
+          <button class="back-arrow-btn" onclick="goToScreen('HOME')">←</button>
+          <div class="subscreen-title">Notifications</div>
+        </div>
+
+        <div style="padding: 16px; flex: 1; overflow-y: auto; background: var(--surface);">
+          <div style="background: #E0F2FE; padding: 12px 14px; border-radius: 14px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between;">
+            <span style="font-size: 12.5px; font-weight: 700; color: #0369A1;">❄️ Container Temperature</span>
+            <span style="font-size: 14px; font-weight: 800; color: #0284C7;">-2.0°C</span>
+          </div>
+
+          <div class="patient-card-box" style="cursor: pointer; margin-bottom: 10px;" onclick="alert('Assignment Accepted!'); goToScreen('HOME')">
+            <div style="font-size: 14px; font-weight: 800; color: var(--text-dark);">New Collection Assigned!</div>
+            <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">Blood panel and lipid profile collection.</div>
+            <div style="font-size: 11px; color: var(--primary); font-weight: 700; margin-top: 6px;">12 minutes ago • Home</div>
+          </div>
+
+          <div class="patient-card-box" style="margin-bottom: 10px;">
+            <div style="font-size: 14px; font-weight: 800; color: var(--text-dark);">Container Temperature</div>
+            <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">Container temperature is maintained at -2.0°C.</div>
+            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 6px;">25 minutes ago</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- SCREEN 12: PROFILE                             -->
+      <!-- ============================================== -->
+      <div id="screen-profile" class="app-screen">
+        <div class="subscreen-header">
+          <button class="back-arrow-btn" onclick="goToScreen('HOME')">←</button>
+          <div class="subscreen-title">Profile</div>
+        </div>
+
+        <div style="padding: 20px; flex: 1; background: var(--surface); text-align: center;">
+          <div class="avatar-yellow" style="width: 72px; height: 72px; font-size: 26px; margin: 0 auto 12px auto;">AP</div>
+          <div style="font-size: 18px; font-weight: 800; color: var(--text-dark);">Ashok Pandian</div>
+          <div style="font-size: 13px; color: var(--primary); font-weight: 700; margin-bottom: 24px;">Field Phlebotomist Lead (EMP-8842)</div>
+
+          <div style="background: #F8FAFC; border-radius: 16px; padding: 14px; text-align: left; margin-bottom: 24px; border: 1px solid var(--surface-border);">
+            <div style="font-size: 12px; color: var(--text-secondary);">Phone Number</div>
+            <div style="font-size: 14px; font-weight: 700; color: var(--text-dark); margin-bottom: 10px;">+91 98765 43210</div>
+
+            <div style="font-size: 12px; color: var(--text-secondary);">Vehicle Registration</div>
+            <div style="font-size: 14px; font-weight: 700; color: var(--text-dark); margin-bottom: 10px;">KA-05-MK-4421</div>
+
+            <div style="font-size: 12px; color: var(--text-secondary);">Assigned Hub</div>
+            <div style="font-size: 14px; font-weight: 700; color: var(--text-dark);">MedReach Koramangala Central Lab</div>
+          </div>
+
+          <button type="button" class="btn-cancel-red" style="width: 100%; height: 48px; border-radius: 24px;" onclick="goToScreen('LOGIN')">
+            Log Out
+          </button>
+        </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- SCREEN 10: FORGOT PASSWORD                     -->
+      <!-- ============================================== -->
+      <div id="screen-forgot_password" class="app-screen">
+        <div class="subscreen-header">
+          <button class="back-arrow-btn" onclick="goToScreen('LOGIN')">←</button>
+          <div class="subscreen-title">Forgot Password</div>
+        </div>
+
+        <div style="padding: 24px 20px; flex: 1; background: var(--surface);">
+          <div style="font-size: 13.5px; color: var(--text-secondary); margin-bottom: 20px;">
+            Enter your registered mobile number or email ID to receive a verification OTP code.
+          </div>
+
+          <label class="field-label">Registered Mobile / Email</label>
+          <div class="field-input-box">
+            <span style="color: var(--primary);">📞</span>
+            <input type="text" value="+91 98765 43210">
+          </div>
+
+          <button type="button" class="btn-login-teal" style="margin-top: 16px;" onclick="goToScreen('VERIFY_OTP')">
+            Send OTP
+          </button>
+        </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- SCREEN 11: VERIFY OTP                          -->
+      <!-- ============================================== -->
+      <div id="screen-verify_otp" class="app-screen">
+        <div class="subscreen-header">
+          <button class="back-arrow-btn" onclick="goToScreen('FORGOT_PASSWORD')">←</button>
+          <div class="subscreen-title">Verify OTP</div>
+        </div>
+
+        <div style="padding: 24px 20px; flex: 1; background: var(--surface); text-align: center;">
+          <div style="font-size: 13.5px; color: var(--text-secondary); margin-bottom: 24px;">
+            Enter the 4-digit verification code sent to +91 98765 43210
+          </div>
+
+          <div style="display: flex; justify-content: center; gap: 12px; margin-bottom: 24px;">
+            <input type="text" maxlength="1" value="8" style="width: 48px; height: 52px; border-radius: 12px; border: 1.5px solid var(--primary); text-align: center; font-size: 20px; font-weight: 800;">
+            <input type="text" maxlength="1" value="8" style="width: 48px; height: 52px; border-radius: 12px; border: 1.5px solid var(--primary); text-align: center; font-size: 20px; font-weight: 800;">
+            <input type="text" maxlength="1" value="4" style="width: 48px; height: 52px; border-radius: 12px; border: 1.5px solid var(--primary); text-align: center; font-size: 20px; font-weight: 800;">
+            <input type="text" maxlength="1" value="2" style="width: 48px; height: 52px; border-radius: 12px; border: 1.5px solid var(--primary); text-align: center; font-size: 20px; font-weight: 800;">
+          </div>
+
+          <button type="button" class="btn-login-teal" onclick="alert('OTP Verified! Session restored.'); goToScreen('LOGIN')">
+            Verify & Continue
+          </button>
+        </div>
+      </div>
+
+    </div> <!-- /screen-viewport -->
+  </div> <!-- /app-phone-container -->
+
+  <!-- ---------------------------------------------------- -->
+  <!-- INLINE APPLICATION LOGIC & ROUTER (BULLETPROOF)      -->
+  <!-- ---------------------------------------------------- -->
+  <script>
+    const appState = {
+      currentScreen: 'LOGIN',
+      scannerTarget: 'center', // 'center' | 'patient'
+      patientBarcode: '',
+      cameraStream: null
+    };
+
+    // Update Top Clock
+    function updateClock() {
+      const el = document.getElementById('statusBarClock');
+      if (el) {
+        const d = new Date();
+        const h = d.getHours().toString().padStart(2, '0');
+        const m = d.getMinutes().toString().padStart(2, '0');
+        el.textContent = `${h}:${m}`;
+      }
+    }
+    updateClock();
+    setInterval(updateClock, 10000);
+
+    // Screen Router
+    function goToScreen(screenName) {
+      appState.currentScreen = screenName;
+
+      // Hide all screens
+      const screens = document.querySelectorAll('.app-screen');
+      screens.forEach(s => s.classList.remove('active'));
+
+      // Show requested screen
+      const target = document.getElementById(`screen-${screenName.toLowerCase()}`);
+      if (target) {
+        target.classList.add('active');
+      }
+
+      // Scanner Dark Mode Status Bar
+      const statusBar = document.getElementById('appStatusBar');
+      if (screenName === 'BARCODE_SCANNER') {
+        statusBar.classList.add('dark-mode');
+        startWebcam();
+      } else {
+        statusBar.classList.remove('dark-mode');
+        stopWebcam();
+      }
+
+      // Scroll to top
+      const viewport = document.getElementById('appScreenViewport');
+      if (viewport) viewport.scrollTop = 0;
+    }
+
+    // Login Form Handler (CRITICAL: Goes from Screen 0 to Screen 1 Home!)
+    function handleLoginSubmit(event) {
+      if (event) event.preventDefault();
+      const ident = document.getElementById('loginIdentifier').value.trim();
+      const pass = document.getElementById('loginPassword').value;
+
+      if (!ident) {
+        alert('Please enter your mobile number or email ID');
+        return;
+      }
+      if (!pass) {
+        alert('Please enter your password');
+        return;
+      }
+
+      // Transition straight to Home screen!
+      goToScreen('HOME');
+    }
+
+    function togglePasswordVisibility() {
+      const p = document.getElementById('loginPassword');
+      p.type = p.type === 'password' ? 'text' : 'password';
+    }
+
+    // Home Screen Actions
+    function toggleExpandTubes() {
+      const norm = document.getElementById('normalTubesRow');
+      const exp = document.getElementById('expandedTubesGrid');
+      if (norm.style.display === 'none') {
+        norm.style.display = 'flex';
+        exp.style.display = 'none';
+      } else {
+        norm.style.display = 'none';
+        exp.style.display = 'block';
+      }
+    }
+
+    function switchHomeTab(tab) {
+      document.getElementById('tabPendingBtn').classList.toggle('active', tab === 'pending');
+      document.getElementById('tabCompletedBtn').classList.toggle('active', tab === 'completed');
+    }
+
+    function filterPatients(query) {
+      const q = query.toLowerCase().trim();
+      const cards = document.querySelectorAll('.patient-card-box');
+      cards.forEach(card => {
+        const text = card.textContent.toLowerCase();
+        card.style.display = text.includes(q) ? 'block' : 'none';
+      });
+    }
+
+    // Rejection Flow
+    function confirmTaskRejection() {
+      const radios = document.getElementsByName('rejectReason');
+      let reason = 'Patient not available at home';
+      for (let r of radios) {
+        if (r.checked) {
+          reason = r.value;
+          break;
+        }
+      }
+      alert(`Task Cancelled: "${reason}". Removed from active queue.`);
+      goToScreen('HOME');
+    }
+
+    // Payment Flow
+    function goToPaymentSuccess(method) {
+      document.getElementById('paymentModeReceivedText').textContent = `Received via ${method}`;
+      goToScreen('PAYMENT_SUCCESS');
+    }
+
+    // Batchsheet LIMS Fetch (Screen 8)
+    function handleBatchsheetFetch() {
+      const input = document.getElementById('inputBatchsheetBarcode');
+      let code = input.value.trim();
+      if (!code) {
+        code = 'BS-883921';
+        input.value = code;
+      }
+      document.getElementById('expectedContainersVal').value = '4';
+      document.getElementById('batchHelperText').innerHTML = `
+        <span style="color: #0D9488; font-weight: 700;">✓ LIMS Verified:</span> Expected 4 containers from Indiranagar Clinic.
+      `;
+    }
+
+    function saveCenterBatch() {
+      const code = document.getElementById('inputBatchsheetBarcode').value.trim();
+      if (!code) {
+        alert('Please enter or fetch batchsheet barcode first!');
+        return;
+      }
+      alert('Center Collection Details successfully saved to LIMS database!');
+      goToScreen('HOME');
+    }
+
+    // Camera Barcode Scanner (Screen 9)
+    function openScannerScreen(target) {
+      appState.scannerTarget = target;
+      document.getElementById('scannerDetectedNumber').textContent = 'Align barcode in frame...';
+      const btn = document.getElementById('btnConfirmBarcode');
+      btn.disabled = true;
+      btn.textContent = target === 'patient' ? 'Associate Reference' : 'Fetch Reference No';
+      goToScreen('BARCODE_SCANNER');
+    }
+
+    async function startWebcam() {
+      const video = document.getElementById('liveCameraVideo');
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 480 } },
+            audio: false
+          });
+          appState.cameraStream = stream;
+          video.srcObject = stream;
+          video.play();
+        } catch (_) {}
+      }
+    }
+
+    function stopWebcam() {
+      if (appState.cameraStream) {
+        appState.cameraStream.getTracks().forEach(t => t.stop());
+        appState.cameraStream = null;
+      }
+    }
+
+    function simulateBarcodeTrigger() {
+      const code = '39' + Math.floor(10000000000000000 + Math.random() * 90000000000000000);
+      document.getElementById('scannerDetectedNumber').textContent = code;
+      const btn = document.getElementById('btnConfirmBarcode');
+      btn.disabled = false;
+      btn.setAttribute('data-code', code);
+    }
+
+    function confirmScannedCode() {
+      const code = document.getElementById('btnConfirmBarcode').getAttribute('data-code') || '3934201948210948201';
+      if (appState.scannerTarget === 'patient') {
+        document.getElementById('patientBarcodeField').value = code;
+        goToScreen('PATIENT_DETAIL');
+      } else {
+        document.getElementById('centerRefInput').value = code;
+        goToScreen('CENTER_COLLECTION');
+      }
+    }
+
+    function closeScannerScreen() {
+      goToScreen(appState.scannerTarget === 'patient' ? 'PATIENT_DETAIL' : 'CENTER_COLLECTION');
+    }
+  </script>
+</body>
+</html>

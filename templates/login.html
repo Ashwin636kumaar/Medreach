@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - MedReach Diagnostics Field Portal</title>
+  <link rel="icon" href="static\images\favicon.svg" type="image/svg+xml">
+  <style>
+    :root {
+      --primary: #149B9E;
+      --primary-dark: #0E7F82;
+      --primary-light: #E6F7F5;
+      --surface: #FFFFFF;
+      --surface-border: #E2E8F0;
+      --text-dark: #0F172A;
+      --text-secondary: #64748B;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    html, body { width: 100%; height: 100%; background: #F0FDF4; display: flex; flex-direction: column; }
+
+    /* Fullscreen Desktop Layout Grid */
+    .portal-login-fullscreen {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      width: 100%;
+      height: 100%;
+    }
+
+    @media (max-width: 900px) {
+      .portal-login-fullscreen { grid-template-columns: 1fr; }
+      .login-left-hero { display: none !important; }
+    }
+
+    /* Left Hero Showcase */
+    .login-left-hero {
+      background: linear-gradient(135deg, #0F766E 0%, #149B9E 50%, #0D9488 100%);
+      color: #FFFFFF;
+      padding: 60px 80px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-brand-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .hero-badge-circle {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: #FFFFFF;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      font-weight: 800;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+    }
+
+    .hero-brand-name {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .hero-center-content h1 {
+      font-size: 44px;
+      font-weight: 800;
+      line-height: 1.15;
+      margin-bottom: 20px;
+      letter-spacing: -1px;
+    }
+
+    .hero-center-content p {
+      font-size: 17px;
+      line-height: 1.6;
+      opacity: 0.9;
+      max-width: 540px;
+      margin-bottom: 30px;
+    }
+
+    .hero-feature-pills {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .feature-pill {
+      background: rgba(255, 255, 255, 0.18);
+      backdrop-filter: blur(8px);
+      padding: 10px 18px;
+      border-radius: 30px;
+      font-size: 13.5px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .hero-footer-stats {
+      display: flex;
+      gap: 40px;
+      padding-top: 24px;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .hero-stat-item h3 { font-size: 26px; font-weight: 800; }
+    .hero-stat-item span { font-size: 12px; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* Right Login Panel */
+    .login-right-panel {
+      background: #FFFFFF;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 40px 60px;
+    }
+
+    .login-form-container {
+      width: 100%;
+      max-width: 440px;
+    }
+
+    .login-form-header {
+      margin-bottom: 28px;
+    }
+
+    .login-form-header h2 {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--text-dark);
+      letter-spacing: -0.5px;
+      margin-bottom: 6px;
+    }
+
+    .login-form-header p {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text-dark);
+      margin-bottom: 8px;
+    }
+
+    .input-box {
+      display: flex;
+      align-items: center;
+      background: #F8FAFC;
+      border: 1.5px solid var(--surface-border);
+      border-radius: 14px;
+      padding: 14px 16px;
+      gap: 12px;
+      transition: all 0.2s;
+    }
+
+    .input-box:focus-within {
+      border-color: var(--primary);
+      background: #FFFFFF;
+      box-shadow: 0 0 0 3px rgba(20, 155, 158, 0.15);
+    }
+
+    .input-box input {
+      border: none;
+      background: transparent;
+      outline: none;
+      flex: 1;
+      font-size: 15px;
+      color: var(--text-dark);
+    }
+
+    .btn-submit-fullscreen {
+      width: 100%;
+      height: 54px;
+      background: var(--primary);
+      border-radius: 27px;
+      color: #FFFFFF;
+      border: none;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 6px 20px rgba(20, 155, 158, 0.35);
+      transition: background 0.15s, transform 0.05s;
+      margin-top: 10px;
+    }
+
+    .btn-submit-fullscreen:hover { background: var(--primary-dark); }
+    .btn-submit-fullscreen:active { transform: scale(0.99); }
+
+    .forgot-link {
+      display: block;
+      text-align: right;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--primary);
+      text-decoration: none;
+      margin-bottom: 22px;
+    }
+  </style>
+</head>
+<body>
+  <div class="portal-login-fullscreen">
+    <!-- Left Hero Banner -->
+    <div class="login-left-hero">
+      <div class="hero-brand-row">
+        <div class="hero-badge-circle">+</div>
+        <div class="hero-brand-name">MedReach</div>
+      </div>
+
+      <div class="hero-center-content">
+        <h1>Smart Field Phlebotomy & Diagnostics Suite</h1>
+        <p>Connecting field runners, collection centers, and central processing laboratories in real-time with verified barcode chain-of-custody.</p>
+
+        <div class="hero-feature-pills">
+          <div class="feature-pill"><span>❄️</span> Cold-Chain Temp Monitoring (-2°C)</div>
+          <div class="feature-pill"><span>🏷️</span> LIMS Batch Barcode Verification</div>
+          <div class="feature-pill"><span>📷</span> Real-time Live Optical Scanner</div>
+        </div>
+      </div>
+
+      <div class="hero-footer-stats">
+        <div class="hero-stat-item">
+          <h3>99.8%</h3>
+          <span>Specimen Integrity</span>
+        </div>
+        <div class="hero-stat-item">
+          <h3>24 Collections</h3>
+          <span>Daily Run Average</span>
+        </div>
+        <div class="hero-stat-item">
+          <h3>4 Labs</h3>
+          <span>Integrated Hubs</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Login Form Panel -->
+    <div class="login-right-panel">
+      <div class="login-form-container">
+        <div class="login-form-header">
+          <h2>Sign in to Field Suite</h2>
+          <p>Access your assigned pickups, collections, and sample logs.</p>
+        </div>
+
+        <form action="/home" method="GET">
+          <div class="form-group">
+            <label>Mobile No / Email ID</label>
+            <div class="input-box">
+              <span style="color: var(--primary); font-size: 16px;">📞</span>
+              <input type="text" name="username" value="ashok.field@medreach.com" required placeholder="Enter mobile number or email ID">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Password</label>
+            <div class="input-box">
+              <span style="color: var(--primary); font-size: 16px;">🔒</span>
+              <input type="password" id="passInput" name="password" value="password123" required placeholder="Enter password">
+              <span style="cursor: pointer; color: var(--text-secondary);" onclick="const p = document.getElementById('passInput'); p.type = p.type === 'password' ? 'text' : 'password'">👁️</span>
+            </div>
+          </div>
+
+          <a href="/forgot-password" class="forgot-link">Forgot Password?</a>
+
+          <button type="submit" class="btn-submit-fullscreen">
+            Sign In to Field Portal ➔
+          </button>
+        </form>
+
+        <div style="margin-top: 32px; font-size: 12px; color: var(--text-secondary); text-align: center; line-height: 1.6;">
+          Authorized diagnostics personnel only. Connected to MySQL database (<code>medreach_db</code>).
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
