@@ -130,10 +130,10 @@
     <div class="nav-user-actions">
       <a href="/notifications" class="btn-bell-round"><span>🔔</span><div class="bell-badge-dot"></div></a>
       <a href="/profile" class="user-pill-profile">
-        <div class="avatar-yellow-round">AP</div>
+        <div class="avatar-yellow-round" id="userAvatarText">AK</div>
         <div style="text-align:left;">
-          <div style="font-size:13px; font-weight:800; color:var(--text-dark);">Ashok Pandian</div>
-          <div style="font-size:11px; color:var(--text-secondary);">EMP-8842 • Field Lead</div>
+          <div id="userNameText" style="font-size:13px; font-weight:800; color:var(--text-dark);">Ashwin Kumar</div>
+          <div id="userRoleText" style="font-size:11px; color:var(--text-secondary);">EMP-9342 • Field Lead</div>
         </div>
       </a>
     </div>
@@ -334,7 +334,26 @@
     }).join('');
   }
 
-  document.addEventListener('DOMContentLoaded', fetchTasks);
+  function updateCurrentUser() {
+    try {
+      const stored = localStorage.getItem('medreach_user');
+      if (stored) {
+        const u = JSON.parse(stored);
+        if (u.name) document.getElementById('userNameText').innerText = u.name;
+        if (u.role || u.employeeId) document.getElementById('userRoleText').innerText = `${u.employeeId || 'EMP-9342'} • ${u.role || 'Field Phlebotomist Lead'}`;
+        if (u.name) {
+          const parts = u.name.split(' ');
+          const initials = parts.length > 1 ? (parts[0][0] + parts[1][0]).toUpperCase() : parts[0].substring(0, 2).toUpperCase();
+          document.getElementById('userAvatarText').innerText = initials;
+        }
+      }
+    } catch(e) {}
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    updateCurrentUser();
+    fetchTasks();
+  });
 </script>
 </body>
 </html>

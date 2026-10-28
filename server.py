@@ -307,20 +307,6 @@ def api_login(req: LoginRequest, db: Session = Depends(get_db)):
 
     user = db.query(models.User).filter(models.User.username == req.username).first()
     if not user or user.password_hash != req.password:
-        # For testing ease, allow password123 for any username
-        if req.password == "password123":
-            print(f"\n[AUTH SUCCESS] 👤 User identified: {req.username} logged in at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-            return {
-                "success": True,
-                "user": {
-                    "id": "USR-101",
-                    "name": "Ashok Pandian",
-                    "role": "Field Phlebotomist Lead",
-                    "email": req.username,
-                    "employeeId": "EMP-8842",
-                    "phone": "+91 98765 43210"
-                }
-            }
         print(f"\n[AUTH FAILED] ❌ Failed login attempt for user: {req.username}\n")
         raise HTTPException(status_code=401, detail="Invalid username or password")
     
