@@ -263,29 +263,29 @@
         <!-- Alert Notification Box -->
         <div id="loginAlert" style="display: none; padding: 12px 16px; border-radius: 12px; margin-bottom: 20px; font-size: 13.5px; font-weight: 500; line-height: 1.5; transition: all 0.2s;"></div>
 
-        <form id="loginForm" onsubmit="handleWebLogin(event)">
+        <form id="loginForm" action="javascript:void(0);" onsubmit="handleWebLogin(event); return false;">
           <div class="form-group">
             <label>Mobile No / Email ID</label>
             <div class="input-box" id="usernameBox">
               <span style="color: var(--primary); font-size: 16px;">📞</span>
-              <input type="text" id="loginUsername" name="username" required placeholder="Enter mobile number or email ID" autocomplete="username">
+              <input type="text" id="loginUsername" name="username" required placeholder="Enter mobile number or email ID" autocomplete="username" onkeydown="if(event.key === 'Enter') handleWebLogin(event)">
             </div>
-            <div id="userError" style="display: none; color: #EF4444; font-size: 12px; margin-top: 6px; margin-left: 4px;"></div>
+            <div id="userError" style="display: none; color: #EF4444; font-size: 12px; margin-top: 6px; margin-left: 4px; font-weight: 600;"></div>
           </div>
 
           <div class="form-group">
             <label>Password</label>
             <div class="input-box" id="passwordBox">
               <span style="color: var(--primary); font-size: 16px;">🔒</span>
-              <input type="password" id="loginPassword" name="password" required placeholder="Enter password" autocomplete="current-password">
+              <input type="password" id="loginPassword" name="password" required placeholder="Enter password" autocomplete="current-password" onkeydown="if(event.key === 'Enter') handleWebLogin(event)">
               <span style="cursor: pointer; color: var(--text-secondary); user-select: none;" onclick="const p = document.getElementById('loginPassword'); p.type = p.type === 'password' ? 'text' : 'password'">👁️</span>
             </div>
-            <div id="passError" style="display: none; color: #EF4444; font-size: 12px; margin-top: 6px; margin-left: 4px;"></div>
+            <div id="passError" style="display: none; color: #EF4444; font-size: 12px; margin-top: 6px; margin-left: 4px; font-weight: 600;"></div>
           </div>
 
           <a href="/forgot-password" class="forgot-link">Forgot Password?</a>
 
-          <button type="submit" id="loginSubmitBtn" class="btn-submit-fullscreen">
+          <button type="button" onclick="handleWebLogin(event)" id="loginSubmitBtn" class="btn-submit-fullscreen">
             Sign In to Field Portal ➔
           </button>
         </form>
@@ -299,7 +299,7 @@
 
   <script>
     async function handleWebLogin(e) {
-      e.preventDefault();
+      if (e && e.preventDefault) e.preventDefault();
 
       const usernameInput = document.getElementById('loginUsername');
       const passwordInput = document.getElementById('loginPassword');
@@ -313,31 +313,44 @@
       const rawUser = usernameInput.value.trim();
       const rawPass = passwordInput.value.trim();
 
-      // Reset errors
+      // Reset previous error states
       alertBox.style.display = 'none';
       usernameBox.style.borderColor = 'var(--surface-border)';
       passwordBox.style.borderColor = 'var(--surface-border)';
       userError.style.display = 'none';
       passError.style.display = 'none';
 
+      // 1. Check for empty fields
+      if (!rawUser && !rawPass) {
+        usernameBox.style.borderColor = '#EF4444';
+        passwordBox.style.borderColor = '#EF4444';
+        userError.innerText = 'Please enter your mobile number or email ID';
+        userError.style.display = 'block';
+        passError.innerText = 'Please enter your password';
+        passError.style.display = 'block';
+        return false;
+      }
+
       if (!rawUser) {
         userError.innerText = 'Please enter your mobile number or email ID';
         userError.style.display = 'block';
         usernameBox.style.borderColor = '#EF4444';
-        return;
+        usernameInput.focus();
+        return false;
       }
 
       if (!rawPass) {
         passError.innerText = 'Please enter your password';
         passError.style.display = 'block';
         passwordBox.style.borderColor = '#EF4444';
-        return;
+        passwordInput.focus();
+        return false;
       }
 
-      // Check credentials:
-      // Email: ashwinkumaar65@gmail.com / ashwinkumar65@gmail.com
-      // Mobile: 9342600642
-      // Password: ash@123 / Ash@123 / Ashwin@2005
+      // 2. Validate against authorized credentials:
+      // Email: ashwinkumaar65@gmail.com or ashwinkumar65@gmail.com
+      // Mobile: 9342600642 (or with country code +91)
+      // Password: ash@123 (or Ash@123, Ashwin@2005)
       const cleanUser = rawUser.toLowerCase();
       const digitsOnly = cleanUser.replace(/\D/g, '');
 
@@ -354,12 +367,54 @@
         rawPass === 'Ashwin@2005'
       );
 
+      // Check specific failures
+      if (!isAllowedUser && !isAllowedPass) {
+        usernameBox.style.borderColor = '#EF4444';
+        passwordBox.style.borderColor = '#EF4444';
+        userError.innerText = 'Wrong user ID';
+        userError.style.display = 'block';
+        passError.innerText = 'Wrong password';
+        passError.style.display = 'block';
+        alertBox.style.background = '#FEE2E2';
+        alertBox.style.color = '#B91C1C';
+        alertBox.style.border = '1px solid #FCA5A5';
+        alertBox.innerHTML = '<strong>Login Failed:</strong> Invalid email/mobile number or password.';
+        alertBox.style.display = 'block';
+        return false;
+      }
+
+      if (!isAllowedUser) {
+        usernameBox.style.borderColor = '#EF4444';
+        userError.innerText = 'Wrong user ID';
+        userError.style.display = 'block';
+        alertBox.style.background = '#FEE2E2';
+        alertBox.style.color = '#B91C1C';
+        alertBox.style.border = '1px solid #FCA5A5';
+        alertBox.innerHTML = '<strong>Login Failed:</strong> Wrong email or mobile number.';
+        alertBox.style.display = 'block';
+        usernameInput.focus();
+        return false;
+      }
+
+      if (!isAllowedPass) {
+        passwordBox.style.borderColor = '#EF4444';
+        passError.innerText = 'Wrong password';
+        passError.style.display = 'block';
+        alertBox.style.background = '#FEE2E2';
+        alertBox.style.color = '#B91C1C';
+        alertBox.style.border = '1px solid #FCA5A5';
+        alertBox.innerHTML = '<strong>Login Failed:</strong> Wrong password.';
+        alertBox.style.display = 'block';
+        passwordInput.focus();
+        return false;
+      }
+
+      // 3. Credentials are VALID -> Call backend API and redirect
       submitBtn.disabled = true;
       submitBtn.style.opacity = '0.7';
       submitBtn.innerText = 'Verifying credentials...';
 
       try {
-        // Send request to FastAPI backend
         const response = await fetch('/api/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -368,65 +423,58 @@
 
         const result = await response.json();
 
-        if (response.ok && result.success && isAllowedUser && isAllowedPass) {
-          // SUCCESS: Save user session and navigate to Home!
+        if (response.ok && result.success) {
           alertBox.style.background = '#DCFCE7';
           alertBox.style.color = '#15803D';
           alertBox.style.border = '1px solid #86EFAC';
           alertBox.innerHTML = '<strong>Success!</strong> Login verified. Redirecting to Field Suite...';
           alertBox.style.display = 'block';
 
-          if (result.user) {
-            localStorage.setItem('medreach_user', JSON.stringify(result.user));
-          }
+          localStorage.setItem('medreach_user', JSON.stringify(result.user || {
+            name: "Ashwin Kumar",
+            role: "Field Phlebotomist Lead",
+            email: "ashwinkumaar65@gmail.com",
+            employeeId: "EMP-9342"
+          }));
 
           setTimeout(() => {
             window.location.href = '/home';
-          }, 400);
+          }, 350);
+          return true;
         } else {
-          // FAILURE: Block navigation and show error alert
+          // Backend returned error
+          const errMsg = result.detail || result.message || 'Invalid email/mobile number or password.';
           alertBox.style.background = '#FEE2E2';
           alertBox.style.color = '#B91C1C';
           alertBox.style.border = '1px solid #FCA5A5';
-          alertBox.innerHTML = '<strong>Login Failed:</strong> Invalid email/mobile number or password.<br><span style="font-size:12px; opacity:0.85;">Use: ashwinkumaar65@gmail.com / 9342600642 with password: ash@123</span>';
+          alertBox.innerHTML = `<strong>Login Failed:</strong> ${errMsg}`;
           alertBox.style.display = 'block';
-
-          if (!isAllowedUser) {
-            usernameBox.style.borderColor = '#EF4444';
-          }
-          if (!isAllowedPass) {
-            passwordBox.style.borderColor = '#EF4444';
-          }
 
           submitBtn.disabled = false;
           submitBtn.style.opacity = '1';
           submitBtn.innerText = 'Sign In to Field Portal ➔';
+          return false;
         }
       } catch (err) {
-        console.warn('Network / Offline fallback check:', err);
+        console.warn('Network issue, local check passed:', err);
+        // If server is temporarily unreachable but credentials are valid:
+        alertBox.style.background = '#DCFCE7';
+        alertBox.style.color = '#15803D';
+        alertBox.style.border = '1px solid #86EFAC';
+        alertBox.innerHTML = '<strong>Success!</strong> Login verified. Redirecting...';
+        alertBox.style.display = 'block';
 
-        // Fallback local verification if offline
-        if (isAllowedUser && isAllowedPass) {
-          alertBox.style.background = '#DCFCE7';
-          alertBox.style.color = '#15803D';
-          alertBox.style.border = '1px solid #86EFAC';
-          alertBox.innerHTML = '<strong>Success!</strong> Verified. Redirecting to Field Suite...';
-          alertBox.style.display = 'block';
+        localStorage.setItem('medreach_user', JSON.stringify({
+          name: "Ashwin Kumar",
+          role: "Field Phlebotomist Lead",
+          email: "ashwinkumaar65@gmail.com",
+          employeeId: "EMP-9342"
+        }));
 
-          setTimeout(() => {
-            window.location.href = '/home';
-          }, 400);
-        } else {
-          alertBox.style.background = '#FEE2E2';
-          alertBox.style.color = '#B91C1C';
-          alertBox.style.border = '1px solid #FCA5A5';
-          alertBox.innerHTML = '<strong>Login Failed:</strong> Invalid credentials. Please enter valid email/mobile and password.';
-          alertBox.style.display = 'block';
-
-          submitBtn.disabled = false;
-          submitBtn.style.opacity = '1';
-          submitBtn.innerText = 'Sign In to Field Portal ➔';
-        }
+        setTimeout(() => {
+          window.location.href = '/home';
+        }, 350);
+        return true;
       }
     }
   </script>

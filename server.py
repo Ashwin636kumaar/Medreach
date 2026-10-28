@@ -285,11 +285,9 @@ def api_login(req: LoginRequest, db: Session = Depends(get_db)):
     digits_only = clean_user.replace(" ", "").replace("+91", "").replace("-", "")
     is_ashwin_user = (
         clean_user in ["ashwinkumaar65@gmail.com", "ashwinkumar65@gmail.com", "9342600642"] or
-        digits_only == "9342600642" or
-        "9342600642" in digits_only or
-        "ashwin" in clean_user
+        digits_only == "9342600642"
     )
-    is_valid_pass = clean_pass in ["ash@123", "Ashwin@2005", "Ash@123", "ashwin@2005", "password123"]
+    is_valid_pass = clean_pass in ["ash@123", "Ash@123", "Ashwin@2005"]
 
     if is_ashwin_user and is_valid_pass:
         print(f"[AUTH SUCCESS] 👤 User identified: Ashwin Kumar ({req.username}) logged in successfully at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
@@ -305,23 +303,14 @@ def api_login(req: LoginRequest, db: Session = Depends(get_db)):
             }
         }
 
-    user = db.query(models.User).filter(models.User.username == req.username).first()
-    if not user or user.password_hash != req.password:
-        print(f"\n[AUTH FAILED] ❌ Failed login attempt for user: {req.username}\n")
-        raise HTTPException(status_code=401, detail="Invalid username or password")
-    
-    print(f"\n[AUTH SUCCESS] 👤 User identified: {user.name} ({user.username}) logged in at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-    return {
-        "success": True,
-        "user": {
-            "id": user.id,
-            "name": user.name,
-            "role": user.role,
-            "email": user.username,
-            "employeeId": user.employee_id,
-            "phone": user.phone
-        }
-    }
+    print(f"\n[AUTH FAILED] ❌ Failed login attempt: user_valid={is_ashwin_user}, pass_valid={is_valid_pass}\n")
+
+    if not is_ashwin_user and not is_valid_pass:
+        raise HTTPException(status_code=401, detail="Invalid email/mobile number or password.")
+    if not is_ashwin_user:
+        raise HTTPException(status_code=401, detail="Wrong email or mobile number.")
+    if not is_valid_pass:
+        raise HTTPException(status_code=401, detail="Wrong password.")
 
 @app.get("/api/dashboard/stats")
 def api_dashboard_stats(db: Session = Depends(get_db)):

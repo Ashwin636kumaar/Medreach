@@ -136,6 +136,9 @@
           <div id="userRoleText" style="font-size:11px; color:var(--text-secondary);">EMP-9342 • Field Lead</div>
         </div>
       </a>
+      <button onclick="handleLogout()" title="Sign Out" style="background: #FEE2E2; color: #DC2626; border: 1px solid #FECACA; border-radius: 20px; padding: 7px 14px; font-size: 12.5px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s;">
+        <span>🚪</span> Logout
+      </button>
     </div>
   </header>
 
@@ -332,6 +335,23 @@
           <div class="patient-action-buttons">${buttons}</div>
         </div>`;
     }).join('');
+  }
+
+  // Route Protection: Redirect unauthenticated visitors to login
+  (function verifyAuth() {
+    try {
+      const stored = localStorage.getItem('medreach_user');
+      if (!stored) {
+        window.location.replace('/login');
+      }
+    } catch(e) {
+      window.location.replace('/login');
+    }
+  })();
+
+  function handleLogout() {
+    localStorage.removeItem('medreach_user');
+    window.location.replace('/login');
   }
 
   function updateCurrentUser() {
