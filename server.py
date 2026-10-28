@@ -205,55 +205,66 @@ class TemperatureRequest(BaseModel):
     temperature: float
 
 
-@app.get("/", response_class=HTMLResponse)
+@app.api_route("/", methods=["GET", "HEAD"], response_class=HTMLResponse)
 @app.get("/login", response_class=HTMLResponse)
 def login_page(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
+    if request.method == "HEAD":
+        return HTMLResponse(status_code=200)
+    return templates.TemplateResponse(request=request, name="login.html")
 
 @app.get("/home", response_class=HTMLResponse)
 def home_page(request: Request):
-    return templates.TemplateResponse("home.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="home.html")
 
 @app.get("/patient-detail", response_class=HTMLResponse)
 def patient_detail_page(request: Request, id: Optional[str] = "TK-209312", barcode: Optional[str] = None):
-    return templates.TemplateResponse("patient_detail.html", {"request": request, "id": id, "barcode": barcode})
+    return templates.TemplateResponse(request=request, name="patient_detail.html", context={"id": id, "barcode": barcode})
 
 @app.get("/collect-payment", response_class=HTMLResponse)
 def collect_payment_page(request: Request):
-    return templates.TemplateResponse("collect_payment.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="collect_payment.html")
 
 @app.get("/payment-success", response_class=HTMLResponse)
 def payment_success_page(request: Request, method: Optional[str] = "Cash"):
-    return templates.TemplateResponse("payment_success.html", {"request": request, "method": method})
+    return templates.TemplateResponse(request=request, name="payment_success.html", context={"method": method})
 
 @app.get("/reject-reassign", response_class=HTMLResponse)
 def reject_reassign_page(request: Request, id: Optional[str] = "TK-209312"):
-    return templates.TemplateResponse("reject_reassign.html", {"request": request, "id": id})
+    return templates.TemplateResponse(request=request, name="reject_reassign.html", context={"id": id})
 
 @app.get("/center-collection", response_class=HTMLResponse)
 def center_collection_page(request: Request, ref: Optional[str] = "RAM1001"):
-    return templates.TemplateResponse("center_collection.html", {"request": request, "ref_no": ref})
+    return templates.TemplateResponse(request=request, name="center_collection.html", context={"ref_no": ref})
 
 @app.get("/scanner", response_class=HTMLResponse)
 def scanner_page(request: Request, target: Optional[str] = "center"):
     return_url = "/patient-detail" if target == "patient" else "/center-collection"
-    return templates.TemplateResponse("scanner.html", {"request": request, "target": target, "return_url": return_url})
+    return templates.TemplateResponse(request=request, name="scanner.html", context={"target": target, "return_url": return_url})
 
 @app.get("/notifications", response_class=HTMLResponse)
 def notifications_page(request: Request):
-    return templates.TemplateResponse("notifications.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="notifications.html")
 
 @app.get("/profile", response_class=HTMLResponse)
 def profile_page(request: Request):
-    return templates.TemplateResponse("profile.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="profile.html")
 
 @app.get("/forgot-password", response_class=HTMLResponse)
 def forgot_password_page(request: Request):
-    return templates.TemplateResponse("forgot_password.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="forgot_password.html")
 
 @app.get("/verify-otp", response_class=HTMLResponse)
 def verify_otp_page(request: Request):
-    return templates.TemplateResponse("verify_otp.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="verify_otp.html")
+
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    favicon_path = os.path.join(static_dir, "images", "favicon.svg")
+    if os.path.exists(favicon_path):
+        from fastapi.responses import FileResponse
+        return FileResponse(favicon_path, media_type="image/svg+xml")
+    from fastapi.responses import Response
+    return Response(status_code=204)
 
 @app.get("/health")
 def health():
