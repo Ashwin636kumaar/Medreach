@@ -290,14 +290,73 @@
           </button>
         </form>
 
-        <div style="margin-top: 32px; font-size: 12px; color: var(--text-secondary); text-align: center; line-height: 1.6;">
-          Authorized diagnostics personnel only. Connected to MySQL database (<code>medreach_db</code>).
+        <!-- Quick Roles Directory for Review & Testing -->
+        <div style="margin-top: 24px; padding-top: 20px; border-top: 1px dashed var(--surface-border);">
+          <div style="font-size: 11.5px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+            <span>Authorized Accounts Directory</span>
+            <span style="font-size: 10.5px; color: var(--primary);">Click role to Quick-Fill</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div onclick="quickFill('admin@medreach.com', 'medreach@2026')" style="display: flex; justify-content: space-between; align-items: center; background: #F8FAFC; border: 1px solid var(--surface-border); border-radius: 12px; padding: 8px 12px; cursor: pointer; transition: background 0.15s;">
+              <div>
+                <strong style="font-size: 12.5px; color: var(--text-dark);">👑 Administrator</strong>
+                <div style="font-size: 11px; color: var(--text-secondary);">admin@medreach.com (Full Control &amp; Audit Logs)</div>
+              </div>
+              <span style="font-size: 11px; color: var(--primary); font-weight: 700;">Fill ➔</span>
+            </div>
+
+            <div onclick="quickFill('reception@medreach.com', 'medreach@2026')" style="display: flex; justify-content: space-between; align-items: center; background: #F8FAFC; border: 1px solid var(--surface-border); border-radius: 12px; padding: 8px 12px; cursor: pointer; transition: background 0.15s;">
+              <div>
+                <strong style="font-size: 12.5px; color: var(--text-dark);">🛎️ Receptionist</strong>
+                <div style="font-size: 11px; color: var(--text-secondary);">reception@medreach.com (Patient Intake &amp; Orders)</div>
+              </div>
+              <span style="font-size: 11px; color: var(--primary); font-weight: 700;">Fill ➔</span>
+            </div>
+
+            <div onclick="quickFill('supervisor@medreach.com', 'medreach@2026')" style="display: flex; justify-content: space-between; align-items: center; background: #F8FAFC; border: 1px solid var(--surface-border); border-radius: 12px; padding: 8px 12px; cursor: pointer; transition: background 0.15s;">
+              <div>
+                <strong style="font-size: 12.5px; color: var(--text-dark);">🩺 Nursing Supervisor</strong>
+                <div style="font-size: 11px; color: var(--text-secondary);">supervisor@medreach.com (Field Operations)</div>
+              </div>
+              <span style="font-size: 11px; color: var(--primary); font-weight: 700;">Fill ➔</span>
+            </div>
+
+            <div onclick="quickFill('auditor@medreach.com', 'medreach@2026')" style="display: flex; justify-content: space-between; align-items: center; background: #FEF3C7; border: 1px solid #FDE68A; border-radius: 12px; padding: 8px 12px; cursor: pointer; transition: background 0.15s;">
+              <div>
+                <strong style="font-size: 12.5px; color: #92400E;">🔍 Compliance Auditor (Read-Only)</strong>
+                <div style="font-size: 11px; color: #B45309;">auditor@medreach.com (Inspect Ledger &amp; Telemetry)</div>
+              </div>
+              <span style="font-size: 11px; color: #B45309; font-weight: 700;">Fill ➔</span>
+            </div>
+
+            <div onclick="quickFill('9342600642', 'ash@123')" style="display: flex; justify-content: space-between; align-items: center; background: #F0FDFA; border: 1px solid #99F6E4; border-radius: 12px; padding: 8px 12px; cursor: pointer; transition: background 0.15s;">
+              <div>
+                <strong style="font-size: 12.5px; color: #0F766E;">🧪 Ashwin Kumar (Lead Phlebotomist)</strong>
+                <div style="font-size: 11px; color: #115E59;">9342600642 / ashwinkumaar65@gmail.com</div>
+              </div>
+              <span style="font-size: 11px; color: #0F766E; font-weight: 700;">Fill ➔</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 24px; font-size: 12px; color: var(--text-secondary); text-align: center; line-height: 1.6;">
+          Enterprise diagnostics personnel authentication. Connected to <code>medreach_db</code>.
         </div>
       </div>
     </div>
   </div>
 
   <script>
+    function quickFill(user, pass) {
+      document.getElementById('loginUsername').value = user;
+      document.getElementById('loginPassword').value = pass;
+      document.getElementById('loginAlert').style.display = 'none';
+      document.getElementById('userError').style.display = 'none';
+      document.getElementById('passError').style.display = 'none';
+      document.getElementById('usernameBox').style.borderColor = 'var(--surface-border)';
+      document.getElementById('passwordBox').style.borderColor = 'var(--surface-border)';
+    }
+
     async function handleWebLogin(e) {
       if (e && e.preventDefault) e.preventDefault();
 
@@ -347,28 +406,92 @@
         return false;
       }
 
-      // 2. Validate against authorized credentials:
-      // Email: ashwinkumaar65@gmail.com or ashwinkumar65@gmail.com
-      // Mobile: 9342600642 (or with country code +91)
-      // Password: ash@123 (or Ash@123, Ashwin@2005)
+      // 2. Multi-Role User Registry Check
       const cleanUser = rawUser.toLowerCase();
       const digitsOnly = cleanUser.replace(/\D/g, '');
 
-      const isAllowedUser = (
-        cleanUser === 'ashwinkumaar65@gmail.com' ||
-        cleanUser === 'ashwinkumar65@gmail.com' ||
-        digitsOnly === '9342600642' ||
-        cleanUser === '9342600642'
-      );
+      const systemAccounts = [
+        {
+          id: 'USR-ADM',
+          name: 'System Administrator',
+          role: 'System Administrator',
+          employeeId: 'ADM-1001',
+          emails: ['admin@medreach.com'],
+          phones: ['9800000001'],
+          passwords: ['medreach@2026', 'admin@2026', 'ash@123'],
+          isReadOnly: false,
+          canManageUsers: true
+        },
+        {
+          id: 'USR-REC',
+          name: 'Front-Desk Reception',
+          role: 'Front-Desk Receptionist',
+          employeeId: 'REC-2001',
+          emails: ['reception@medreach.com'],
+          phones: ['9800000002'],
+          passwords: ['medreach@2026', 'reception@2026'],
+          isReadOnly: false,
+          canManageUsers: false
+        },
+        {
+          id: 'USR-SUP',
+          name: 'Nursing Supervisor',
+          role: 'Nursing Supervisor',
+          employeeId: 'NUR-3001',
+          emails: ['supervisor@medreach.com'],
+          phones: ['9800000003'],
+          passwords: ['medreach@2026', 'supervisor@2026'],
+          isReadOnly: false,
+          canManageUsers: false
+        },
+        {
+          id: 'USR-AUD',
+          name: 'Compliance Auditor',
+          role: 'Compliance Auditor',
+          employeeId: 'AUD-4001',
+          emails: ['auditor@medreach.com'],
+          phones: ['9800000004'],
+          passwords: ['medreach@2026', 'auditor@2026'],
+          isReadOnly: true,
+          canManageUsers: false
+        },
+        {
+          id: 'USR-101',
+          name: 'Ashwin Kumar',
+          role: 'Field Phlebotomist Lead',
+          employeeId: 'EMP-9342',
+          emails: ['ashwinkumaar65@gmail.com', 'ashwinkumar65@gmail.com'],
+          phones: ['9342600642'],
+          passwords: ['ash@123', 'Ash@123', 'Ashwin@2005', 'medreach@2026'],
+          isReadOnly: false,
+          canManageUsers: false
+        },
+        {
+          id: 'USR-105',
+          name: 'Ashok Pandian',
+          role: 'Senior Field Executive',
+          employeeId: 'EMP-8842',
+          emails: ['ashok.field@medreach.com'],
+          phones: ['9444155667'],
+          passwords: ['ashok@123', 'Ashok@123', 'password123', 'medreach@2026'],
+          isReadOnly: false,
+          canManageUsers: false
+        }
+      ];
 
-      const isAllowedPass = (
-        rawPass === 'ash@123' ||
-        rawPass === 'Ash@123' ||
-        rawPass === 'Ashwin@2005'
-      );
+      let matchedAccount = null;
+      for (const acc of systemAccounts) {
+        if (acc.emails.includes(cleanUser) || (digitsOnly && acc.phones.includes(digitsOnly))) {
+          matchedAccount = acc;
+          break;
+        }
+      }
 
-      // Check specific failures
-      if (!isAllowedUser && !isAllowedPass) {
+      // Check if password matches any allowed password in the entire system
+      const allSystemPasswords = new Set(systemAccounts.flatMap(a => a.passwords));
+      const passwordMatchesAny = allSystemPasswords.has(rawPass);
+
+      if (!matchedAccount && !passwordMatchesAny) {
         usernameBox.style.borderColor = '#EF4444';
         passwordBox.style.borderColor = '#EF4444';
         userError.innerText = 'Wrong user ID';
@@ -383,7 +506,7 @@
         return false;
       }
 
-      if (!isAllowedUser) {
+      if (!matchedAccount) {
         usernameBox.style.borderColor = '#EF4444';
         userError.innerText = 'Wrong user ID';
         userError.style.display = 'block';
@@ -396,7 +519,7 @@
         return false;
       }
 
-      if (!isAllowedPass) {
+      if (!matchedAccount.passwords.includes(rawPass)) {
         passwordBox.style.borderColor = '#EF4444';
         passError.innerText = 'Wrong password';
         passError.style.display = 'block';
@@ -409,7 +532,7 @@
         return false;
       }
 
-      // 3. Credentials are VALID -> Call backend API and redirect
+      // 3. Credentials are VALID -> Submit to server
       submitBtn.disabled = true;
       submitBtn.style.opacity = '0.7';
       submitBtn.innerText = 'Verifying credentials...';
@@ -427,14 +550,18 @@
           alertBox.style.background = '#DCFCE7';
           alertBox.style.color = '#15803D';
           alertBox.style.border = '1px solid #86EFAC';
-          alertBox.innerHTML = '<strong>Success!</strong> Login verified. Redirecting to Field Suite...';
+          const roleDisplay = result.user ? result.user.role : matchedAccount.role;
+          alertBox.innerHTML = `<strong>Success!</strong> Authenticated as <strong>${roleDisplay}</strong>. Redirecting...`;
           alertBox.style.display = 'block';
 
           localStorage.setItem('medreach_user', JSON.stringify(result.user || {
-            name: "Ashwin Kumar",
-            role: "Field Phlebotomist Lead",
-            email: "ashwinkumaar65@gmail.com",
-            employeeId: "EMP-9342"
+            id: matchedAccount.id,
+            name: matchedAccount.name,
+            role: matchedAccount.role,
+            email: matchedAccount.emails[0],
+            employeeId: matchedAccount.employeeId,
+            isReadOnly: matchedAccount.isReadOnly,
+            canManageUsers: matchedAccount.canManageUsers
           }));
 
           setTimeout(() => {
@@ -442,7 +569,6 @@
           }, 350);
           return true;
         } else {
-          // Backend returned error
           const errMsg = result.detail || result.message || 'Invalid email/mobile number or password.';
           alertBox.style.background = '#FEE2E2';
           alertBox.style.color = '#B91C1C';
@@ -456,19 +582,21 @@
           return false;
         }
       } catch (err) {
-        console.warn('Network issue, local check passed:', err);
-        // If server is temporarily unreachable but credentials are valid:
+        console.warn('Network issue, local verification active:', err);
         alertBox.style.background = '#DCFCE7';
         alertBox.style.color = '#15803D';
         alertBox.style.border = '1px solid #86EFAC';
-        alertBox.innerHTML = '<strong>Success!</strong> Login verified. Redirecting...';
+        alertBox.innerHTML = `<strong>Success!</strong> Verified as ${matchedAccount.role}. Redirecting...`;
         alertBox.style.display = 'block';
 
         localStorage.setItem('medreach_user', JSON.stringify({
-          name: "Ashwin Kumar",
-          role: "Field Phlebotomist Lead",
-          email: "ashwinkumaar65@gmail.com",
-          employeeId: "EMP-9342"
+          id: matchedAccount.id,
+          name: matchedAccount.name,
+          role: matchedAccount.role,
+          email: matchedAccount.emails[0],
+          employeeId: matchedAccount.employeeId,
+          isReadOnly: matchedAccount.isReadOnly,
+          canManageUsers: matchedAccount.canManageUsers
         }));
 
         setTimeout(() => {

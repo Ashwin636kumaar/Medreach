@@ -82,40 +82,71 @@
     <div class="layout">
       <!-- Left: identity -->
       <section class="panel identity">
-        <div class="avatar-lg">AP</div>
-        <h3>Ashok Pandian</h3>
-        <div class="role">Field Phlebotomist Lead (EMP-8842)</div>
-        <div class="status-chip"><span>🟢</span> On duty</div>
+        <div class="avatar-lg" id="profileAvatar">AP</div>
+        <h3 id="profileName">Ashok Pandian</h3>
+        <div class="role" id="profileRole">Field Phlebotomist Lead (EMP-8842)</div>
+        <div class="status-chip"><span>🟢</span> Active on Duty</div>
       </section>
 
       <!-- Right: details + logout -->
       <section class="panel">
-        <h4>Account Details</h4>
+        <h4>Account Details &amp; Credentials</h4>
         <div class="info-grid">
           <div class="info-row">
-            <div class="info-ico">📞</div>
-            <div><div class="info-label">Phone Number</div><div class="info-value">+91 98765 43210</div></div>
+            <div class="info-ico">✉️</div>
+            <div><div class="info-label">Account Email / ID</div><div class="info-value" id="profileEmail">admin@medreach.com</div></div>
           </div>
           <div class="info-row">
-            <div class="info-ico">🏍️</div>
-            <div><div class="info-label">Vehicle Registration</div><div class="info-value">KA-05-MK-4421</div></div>
+            <div class="info-ico">📞</div>
+            <div><div class="info-label">Contact Number</div><div class="info-value" id="profilePhone">+91 93426 00642</div></div>
+          </div>
+          <div class="info-row">
+            <div class="info-ico">🛡️</div>
+            <div><div class="info-label">System Role &amp; Access Level</div><div class="info-value" id="profileAccessLevel">Full Administrator Access</div></div>
           </div>
           <div class="info-row">
             <div class="info-ico">🏥</div>
-            <div><div class="info-label">Assigned Hub</div><div class="info-value">MedReach Koramangala Central Lab</div></div>
+            <div><div class="info-label">Assigned Central Hub</div><div class="info-value">MedReach Central Reference Lab, Koramangala</div></div>
           </div>
         </div>
-        <button type="button" class="btn-logout" id="logoutBtn">Log Out</button>
+        <button type="button" class="btn-logout" id="logoutBtn" onclick="handleLogout()">Log Out of System</button>
       </section>
     </div>
   </main>
 
 <script>
-  document.getElementById('logoutBtn').addEventListener('click', function () {
+  function handleLogout() {
     if (!confirm('Do you want to log out?')) return;
-    // Optional: tell your backend to end the session
-    // fetch('/api/logout', { method: 'POST' });
-    location.href = '/login';   // change to your real login page address
+    localStorage.removeItem('medreach_user');
+    window.location.href = '/login';
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    try {
+      const stored = localStorage.getItem('medreach_user');
+      if (!stored) {
+        window.location.replace('/login');
+        return;
+      }
+      const u = JSON.parse(stored);
+      if (u.name) document.getElementById('profileName').innerText = u.name;
+      if (u.role || u.employeeId) document.getElementById('profileRole').innerText = `${u.role || ''} (${u.employeeId || ''})`;
+      if (u.email) document.getElementById('profileEmail').innerText = u.email;
+      if (u.phone) document.getElementById('profilePhone').innerText = u.phone || '+91 93426 00642';
+      if (u.isReadOnly) {
+        document.getElementById('profileAccessLevel').innerText = 'Read-Only Compliance Auditor (Restricted)';
+      } else if (u.canManageUsers) {
+        document.getElementById('profileAccessLevel').innerText = 'Super Administrator (Full System & Audit Access)';
+      } else {
+        document.getElementById('profileAccessLevel').innerText = `${u.role} (Operational Access)`;
+      }
+
+      if (u.name) {
+        const parts = u.name.split(' ');
+        const initials = parts.length > 1 ? (parts[0][0] + parts[1][0]).toUpperCase() : parts[0].substring(0, 2).toUpperCase();
+        document.getElementById('profileAvatar').innerText = initials;
+      }
+    } catch(e) {}
   });
 </script>
 </body>

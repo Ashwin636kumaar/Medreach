@@ -125,7 +125,10 @@
     </a>
     <div class="nav-center-chips">
       <div class="chip-indicator chip-temp"><span>❄️</span> Cold-Chain: -2.0°C (Optimal)</div>
-      <div class="chip-indicator"><span>🟢</span> Database: Connected (medreach_db)</div>
+      <a href="/audit-logs" class="chip-indicator" style="background:#EEF2FF; color:#4338CA; border-color:#C7D2FE; text-decoration:none;" title="View Tamper-Evident Security Audit Trail">
+        <span>🛡️</span> Audit Logs &amp; Activity
+      </a>
+      <div class="chip-indicator"><span>🟢</span> Database: medreach_db</div>
     </div>
     <div class="nav-user-actions">
       <a href="/notifications" class="btn-bell-round"><span>🔔</span><div class="bell-badge-dot"></div></a>
@@ -143,6 +146,83 @@
   </header>
 
   <main class="portal-main-layout">
+
+    <!-- Auditor Read-Only Banner -->
+    <div id="auditorWarningBanner" style="display:none; background:#FEF3C7; border:1px solid #F59E0B; border-radius:16px; padding:12px 20px; color:#92400E; font-size:13.5px; font-weight:700; align-items:center; gap:10px;">
+      <span>🔒</span> <strong>Auditor Mode Active:</strong> You are browsing in Read-Only Audit view. Modification actions and specimen cancellation are restricted.
+    </div>
+
+    <!-- Futuristic Telemetry & AI SLA HUD -->
+    <section class="telemetry-hud-grid" style="display:grid; grid-template-columns: 1.5fr 1fr; gap:20px;">
+      <!-- AI Cold-Chain Telemetry -->
+      <div style="background:#FFFFFF; border:1px solid var(--surface-border); border-radius:24px; padding:22px 26px; box-shadow:0 4px 16px rgba(0,0,0,0.03); display:flex; flex-direction:column; justify-content:space-between; gap:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span style="font-size:20px;">❄️</span>
+            <div>
+              <div style="font-size:14px; font-weight:800; color:var(--text-dark);">AI Cold-Chain Telemetry &amp; Peltier Control</div>
+              <div style="font-size:11.5px; color:var(--text-secondary);">Smart Cooler Box <code>BX-NEO-94</code> • IoT Live Stream</div>
+            </div>
+          </div>
+          <span style="display:inline-flex; align-items:center; gap:6px; background:#DCFCE7; color:#15803D; padding:4px 12px; border-radius:12px; font-size:11.5px; font-weight:800;">
+            <span style="width:7px; height:7px; border-radius:50%; background:#16A34A;"></span> Optimal Stable
+          </span>
+        </div>
+
+        <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:12px; background:#F8FAFC; border:1px solid var(--surface-border); border-radius:16px; padding:14px 16px; text-align:center;">
+          <div>
+            <div style="font-size:11px; font-weight:700; color:var(--text-secondary); text-transform:uppercase;">Core Temp</div>
+            <div id="liveIoTTemp" style="font-size:18px; font-weight:800; color:#0284C7; margin-top:3px;">-2.0°C</div>
+          </div>
+          <div>
+            <div style="font-size:11px; font-weight:700; color:var(--text-secondary); text-transform:uppercase;">Box Battery</div>
+            <div style="font-size:18px; font-weight:800; color:#15803D; margin-top:3px;">98%</div>
+          </div>
+          <div>
+            <div style="font-size:11px; font-weight:700; color:var(--text-secondary); text-transform:uppercase;">Lid Pressure</div>
+            <div style="font-size:18px; font-weight:800; color:var(--text-dark); margin-top:3px;">1013 hPa</div>
+          </div>
+          <div>
+            <div style="font-size:11px; font-weight:700; color:var(--text-secondary); text-transform:uppercase;">Hemolysis Risk</div>
+            <div style="font-size:18px; font-weight:800; color:#15803D; margin-top:3px;">0.1% [Safe]</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Specimen Stability & SLA Route Optimizer -->
+      <div style="background:#FFFFFF; border:1px solid var(--surface-border); border-radius:24px; padding:22px 26px; box-shadow:0 4px 16px rgba(0,0,0,0.03); display:flex; flex-direction:column; justify-content:space-between; gap:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span style="font-size:20px;">⏱️</span>
+            <div>
+              <div style="font-size:14px; font-weight:800; color:var(--text-dark);">AI Specimen Stability &amp; SLA HUD</div>
+              <div style="font-size:11.5px; color:var(--text-secondary);">Centrifugation Window &amp; Priority SLA</div>
+            </div>
+          </div>
+          <span style="background:#E0F2FE; color:#0369A1; padding:4px 10px; border-radius:12px; font-size:11px; font-weight:800;">
+            Route SLA: 98.4%
+          </span>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; font-size:12.5px;">
+            <span>🟣 EDTA Whole Blood (CBC)</span>
+            <strong style="color:#0E7F82;">3h 48m to centrifuge</strong>
+          </div>
+          <div style="width:100%; height:6px; background:#E2E8F0; border-radius:3px; overflow:hidden;">
+            <div style="width:72%; height:100%; background:#149B9E;"></div>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; font-size:12.5px; margin-top:4px;">
+            <span>🔵 Sodium Citrate (Coagulation)</span>
+            <strong style="color:#D97706;">1h 45m [Priority Route]</strong>
+          </div>
+          <div style="width:100%; height:6px; background:#E2E8F0; border-radius:3px; overflow:hidden;">
+            <div style="width:42%; height:100%; background:#F59E0B;"></div>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <section class="hero-metrics-grid">
       <div class="card-todays-collection">
@@ -221,6 +301,22 @@
           <div class="widget-title-row"><span>📷</span> Optical Barcode Scanner</div>
           <p class="widget-desc">Use your laptop webcam with Google Lens reticle and laser sweep to scan blood vial barcodes in real time.</p>
           <a href="/scanner" class="btn-widget-action">Launch Webcam Scanner ➔</a>
+        </div>
+
+        <div class="quick-card-widget">
+          <div class="widget-title-row" style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span>🛡️</span> Security Activity Ledger
+            </div>
+            <a href="/audit-logs" style="font-size:11.5px; color:var(--primary); text-decoration:none; font-weight:700;">View All ➔</a>
+          </div>
+          <p class="widget-desc">Tamper-evident logs of changes made by Reception, Nursing Supervisors, Field Executives, and Admins.</p>
+          <div id="miniAuditStream" style="display:flex; flex-direction:column; gap:8px; margin-bottom:14px;">
+            <div style="font-size:12px; color:var(--text-secondary); text-align:center; padding:10px;">Connecting to security ledger...</div>
+          </div>
+          <a href="/audit-logs" class="btn-widget-action" style="background:#4338CA;">
+            <span>🛡️</span> Open Audit Ledger ➔
+          </a>
         </div>
 
         <div class="quick-card-widget" style="background:#F8FAFC;">
@@ -308,11 +404,22 @@
       const paid = String(t.paymentStatus || 'PAID').toUpperCase() === 'PAID';
       const id = encodeURIComponent(t.id);
 
-      const buttons = statusOf(t) === 'completed'
-        ? `<span class="completed-done-tag">✔ Collected${t.completedAt ? ' at ' + esc(t.completedAt) : ''}</span>
-           <a href="/patient-detail?id=${id}" class="btn-view-task">View Details</a>`
-        : `<a href="/reject-reassign?id=${id}" class="btn-cancel-task">✕ Cancel</a>
-           <a href="/patient-detail?id=${id}" class="btn-navigate-task">Navigate &amp; Collect ➔</a>`;
+      let isAuditor = false;
+      try {
+        const u = JSON.parse(localStorage.getItem('medreach_user') || '{}');
+        if (u.isReadOnly) isAuditor = true;
+      } catch(e) {}
+
+      let buttons = '';
+      if (isAuditor) {
+        buttons = `<a href="/patient-detail?id=${id}" class="btn-view-task">👁️ Inspect Details (Read-Only)</a>`;
+      } else if (statusOf(t) === 'completed') {
+        buttons = `<span class="completed-done-tag">✔ Collected${t.completedAt ? ' at ' + esc(t.completedAt) : ''}</span>
+                   <a href="/patient-detail?id=${id}" class="btn-view-task">View Details</a>`;
+      } else {
+        buttons = `<a href="/reject-reassign?id=${id}" class="btn-cancel-task">✕ Cancel</a>
+                   <a href="/patient-detail?id=${id}" class="btn-navigate-task">Navigate &amp; Collect ➔</a>`;
+      }
 
       return `
         <div class="patient-card-widescreen">
@@ -343,6 +450,12 @@
       const stored = localStorage.getItem('medreach_user');
       if (!stored) {
         window.location.replace('/login');
+        return;
+      }
+      const u = JSON.parse(stored);
+      if (u.isReadOnly) {
+        const banner = document.getElementById('auditorWarningBanner');
+        if (banner) banner.style.display = 'flex';
       }
     } catch(e) {
       window.location.replace('/login');
@@ -360,7 +473,7 @@
       if (stored) {
         const u = JSON.parse(stored);
         if (u.name) document.getElementById('userNameText').innerText = u.name;
-        if (u.role || u.employeeId) document.getElementById('userRoleText').innerText = `${u.employeeId || 'EMP-9342'} • ${u.role || 'Field Phlebotomist Lead'}`;
+        if (u.role || u.employeeId) document.getElementById('userRoleText').innerText = `${u.employeeId || 'EMP-9342'} • ${u.role || 'User'}`;
         if (u.name) {
           const parts = u.name.split(' ');
           const initials = parts.length > 1 ? (parts[0][0] + parts[1][0]).toUpperCase() : parts[0].substring(0, 2).toUpperCase();
@@ -370,9 +483,39 @@
     } catch(e) {}
   }
 
+  async function fetchMiniAuditStream() {
+    try {
+      const resp = await fetch('/api/audit-logs?limit=3');
+      const data = await resp.json();
+      const container = document.getElementById('miniAuditStream');
+      if (data.success && data.logs && data.logs.length > 0) {
+        container.innerHTML = data.logs.map(l => `
+          <div style="background:#F8FAFC; border:1px solid var(--surface-border); border-radius:12px; padding:10px 12px; font-size:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              <strong style="color:var(--text-dark);">${esc(l.userName)}</strong>
+              <span style="color:var(--text-secondary); font-size:11px;">${l.timestamp.split(' ')[1] || ''}</span>
+            </div>
+            <div style="color:var(--primary); font-weight:700; font-size:11px; margin-bottom:2px;">${esc(l.action)}</div>
+            <div style="color:var(--text-secondary); line-height:1.3; font-size:11.5px;">${esc(l.details)}</div>
+          </div>
+        `).join('');
+      } else {
+        container.innerHTML = '<div style="font-size:12px; color:var(--text-secondary); text-align:center;">No recent audit logs.</div>';
+      }
+    } catch(e) {}
+  }
+
+  // IoT Cold-chain telemetry fluctuation simulation
+  setInterval(() => {
+    const temps = ['-2.0°C', '-1.9°C', '-2.0°C', '-2.1°C', '-2.0°C'];
+    const el = document.getElementById('liveIoTTemp');
+    if (el) el.innerText = temps[Math.floor(Math.random() * temps.length)];
+  }, 3500);
+
   document.addEventListener('DOMContentLoaded', () => {
     updateCurrentUser();
     fetchTasks();
+    fetchMiniAuditStream();
   });
 </script>
 </body>

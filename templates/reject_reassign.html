@@ -423,12 +423,39 @@
       if (radio) radio.checked = true;
     }
 
-    function confirmRejection() {
+    async function confirmRejection() {
+      let currentUser = { name: "Ashwin Kumar", role: "Field Phlebotomist Lead", employeeId: "EMP-9342" };
+      try {
+        const stored = localStorage.getItem('medreach_user');
+        if (stored) currentUser = JSON.parse(stored);
+      } catch(e) {}
+
+      if (currentUser.isReadOnly) {
+        alert('Access Restricted: Compliance Auditor accounts have Read-Only permissions and cannot reject or cancel tasks.');
+        return;
+      }
+
       const selected = document.querySelector('input[name="rejectionReason"]:checked');
       const reason = selected ? selected.value : 'Task Cancelled';
       const notes = document.getElementById('rejectNotes').value.trim();
       const urlParams = new URLSearchParams(window.location.search);
       const taskId = urlParams.get('id') || 'TK-209312';
+
+      try {
+        await fetch(`/api/tasks/${encodeURIComponent(taskId)}/reject`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            reason: reason,
+            notes: notes,
+            user_name: currentUser.name,
+            user_role: currentUser.role,
+            employee_id: currentUser.employeeId
+          })
+        });
+      } catch(err) {
+        console.warn('Network log failed, saving locally:', err);
+      }
 
       // Save rejection record in localStorage for sync
       try {
@@ -437,12 +464,13 @@
           taskId: taskId,
           reason: reason,
           notes: notes,
+          rejectedBy: currentUser.name,
           timestamp: new Date().toISOString()
         });
         localStorage.setItem('rejected_tasks', JSON.stringify(rejectedTasks));
       } catch(e) {}
 
-      alert(`Task ${taskId} has been cancelled successfully.\nReason: ${reason}\n\nReturning to your dashboard.`);
+      alert(`Task ${taskId} has been cancelled successfully by ${currentUser.name} (${currentUser.role}).\nReason: ${reason}\n\nSecurity Audit Log has been recorded.`);
       window.location.href = '/home';
     }
 

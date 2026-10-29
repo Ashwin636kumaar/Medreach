@@ -88,3 +88,20 @@ class DiagnosticCenter(Base):
     type = Column(String(30), nullable=False) 
     address = Column(Text, nullable=False)
     city = Column(String(50), default="Bengaluru")
+
+class AuditLog(Base):
+    __tablename__ = "audit_logs"
+
+    id = Column(String(50), primary_key=True, index=True)
+    timestamp = Column(DateTime, default=datetime.utcnow, index=True)
+    user_id = Column(String(50), nullable=True)
+    user_name = Column(String(100), nullable=False)
+    user_role = Column(String(50), nullable=False)
+    employee_id = Column(String(50), nullable=True)
+    action = Column(String(50), nullable=False) # e.g. "TASK_REJECTED", "BARCODE_LINKED", "COLLECTION_COMPLETED", "PAYMENT_RECORDED", "BATCH_HANDOVER", "USER_LOGIN"
+    target_id = Column(String(50), nullable=True) # e.g. "TK-209312"
+    target_name = Column(String(100), nullable=True) # e.g. "Priya Venkatesh"
+    details = Column(Text, nullable=False)
+    ip_address = Column(String(50), default="127.0.0.1")
+    security_hash = Column(String(64), nullable=True)
+

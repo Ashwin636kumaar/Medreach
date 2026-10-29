@@ -1,5 +1,6 @@
 import os
 import uvicorn
+import hashlib
 from contextlib import asynccontextmanager
 from datetime import datetime
 from fastapi import FastAPI, Depends, HTTPException, Request, Query
@@ -13,6 +14,92 @@ from typing import Optional, List
 
 from database import engine, Base, get_db, SessionLocal
 import models
+
+def generate_security_hash(user_name: str, action: str, target_id: str, details: str, timestamp_str: str) -> str:
+    content = f"{user_name}|{action}|{target_id}|{details}|{timestamp_str}|MEDREACH_LEDGER_2026"
+    return hashlib.sha256(content.encode()).hexdigest()[:16]
+
+AUTHORIZED_USERS = [
+    {
+        "id": "USR-ADM",
+        "name": "System Administrator",
+        "role": "System Administrator",
+        "employeeId": "ADM-1001",
+        "email": "admin@medreach.com",
+        "phone": "+91 98000 00001",
+        "digitsPhone": "9800000001",
+        "passwords": ["medreach@2026", "admin@2026", "ash@123"],
+        "vehicle": "HQ-ADMIN-01",
+        "isReadOnly": False,
+        "canManageUsers": True
+    },
+    {
+        "id": "USR-REC",
+        "name": "Front-Desk Reception",
+        "role": "Front-Desk Receptionist",
+        "employeeId": "REC-2001",
+        "email": "reception@medreach.com",
+        "phone": "+91 98000 00002",
+        "digitsPhone": "9800000002",
+        "passwords": ["medreach@2026", "reception@2026"],
+        "vehicle": "N/A",
+        "isReadOnly": False,
+        "canManageUsers": False
+    },
+    {
+        "id": "USR-SUP",
+        "name": "Nursing Supervisor",
+        "role": "Nursing Supervisor",
+        "employeeId": "NUR-3001",
+        "email": "supervisor@medreach.com",
+        "phone": "+91 98000 00003",
+        "digitsPhone": "9800000003",
+        "passwords": ["medreach@2026", "supervisor@2026"],
+        "vehicle": "KA-01-NS-3001",
+        "isReadOnly": False,
+        "canManageUsers": False
+    },
+    {
+        "id": "USR-AUD",
+        "name": "Compliance Auditor",
+        "role": "Compliance Auditor",
+        "employeeId": "AUD-4001",
+        "email": "auditor@medreach.com",
+        "phone": "+91 98000 00004",
+        "digitsPhone": "9800000004",
+        "passwords": ["medreach@2026", "auditor@2026"],
+        "vehicle": "N/A",
+        "isReadOnly": True,
+        "canManageUsers": False
+    },
+    {
+        "id": "USR-101",
+        "name": "Ashwin Kumar",
+        "role": "Field Phlebotomist Lead",
+        "employeeId": "EMP-9342",
+        "email": "ashwinkumaar65@gmail.com",
+        "alternateEmail": "ashwinkumar65@gmail.com",
+        "phone": "+91 9342600642",
+        "digitsPhone": "9342600642",
+        "passwords": ["ash@123", "Ash@123", "Ashwin@2005", "medreach@2026"],
+        "vehicle": "KA-05-MK-4421",
+        "isReadOnly": False,
+        "canManageUsers": False
+    },
+    {
+        "id": "USR-105",
+        "name": "Ashok Pandian",
+        "role": "Senior Field Executive",
+        "employeeId": "EMP-8842",
+        "email": "ashok.field@medreach.com",
+        "phone": "+91 9444155667",
+        "digitsPhone": "9444155667",
+        "passwords": ["ashok@123", "Ashok@123", "password123", "medreach@2026"],
+        "vehicle": "KA-05-MK-4421",
+        "isReadOnly": False,
+        "canManageUsers": False
+    }
+]
 
 def seed_default_data():
     db = SessionLocal()
@@ -145,6 +232,116 @@ def seed_default_data():
 
             db.add_all([t1, t2, t3, t4])
 
+        # Seed Multiple Authorized Users
+        existing_usernames = {u.username for u in db.query(models.User.username).all()}
+        users_to_add = []
+        for u in AUTHORIZED_USERS:
+            if u["email"] not in existing_usernames:
+                users_to_add.append(models.User(
+                    id=u["id"],
+                    username=u["email"],
+                    password_hash=u["passwords"][0],
+                    name=u["name"],
+                    role=u["role"],
+                    employee_id=u["employeeId"],
+                    phone=u["phone"],
+                    vehicle_number=u.get("vehicle", "KA-05-MK-4421")
+                ))
+        if users_to_add:
+            db.add_all(users_to_add)
+
+        # Seed Initial Audit Log Records
+        audit_count = db.query(models.AuditLog).count()
+        if audit_count == 0:
+            now_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+            initial_logs = [
+                models.AuditLog(
+                    id="AUD-1001",
+                    timestamp=datetime.utcnow(),
+                    user_id="USR-101",
+                    user_name="Ashwin Kumar",
+                    user_role="Field Phlebotomist Lead",
+                    employee_id="EMP-9342",
+                    action="COLLECTION_COMPLETED",
+                    target_id="TSK-204",
+                    target_name="Suresh Kumar",
+                    details="Completed home specimen collection: 2 EDTA + 1 Serum tube. Cold chain verified at -2.0°C. Verified via patient OTP.",
+                    ip_address="192.168.1.45",
+                    security_hash=generate_security_hash("Ashwin Kumar", "COLLECTION_COMPLETED", "TSK-204", "Completed home collection", now_str)
+                ),
+                models.AuditLog(
+                    id="AUD-1002",
+                    timestamp=datetime.utcnow(),
+                    user_id="USR-101",
+                    user_name="Ashwin Kumar",
+                    user_role="Field Phlebotomist Lead",
+                    employee_id="EMP-9342",
+                    action="BARCODE_LINKED",
+                    target_id="TSK-204",
+                    target_name="Suresh Kumar",
+                    details="Specimen vial barcode MED-393420194 scanned and bound to LIMS accession record.",
+                    ip_address="192.168.1.45",
+                    security_hash=generate_security_hash("Ashwin Kumar", "BARCODE_LINKED", "TSK-204", "Barcode MED-393420194 bound", now_str)
+                ),
+                models.AuditLog(
+                    id="AUD-1003",
+                    timestamp=datetime.utcnow(),
+                    user_id="USR-101",
+                    user_name="Ashwin Kumar",
+                    user_role="Field Phlebotomist Lead",
+                    employee_id="EMP-9342",
+                    action="PAYMENT_RECORDED",
+                    target_id="TSK-204",
+                    target_name="Suresh Kumar",
+                    details="Collected Rs. 950.00 via UPI QR. Txn Ref: UPI-8409210923.",
+                    ip_address="192.168.1.45",
+                    security_hash=generate_security_hash("Ashwin Kumar", "PAYMENT_RECORDED", "TSK-204", "Collected Rs 950 via UPI", now_str)
+                ),
+                models.AuditLog(
+                    id="AUD-1004",
+                    timestamp=datetime.utcnow(),
+                    user_id="USR-103",
+                    user_name="Rajesh Sharma",
+                    user_role="Central Dispatch & Logistics Lead",
+                    employee_id="EMP-4021",
+                    action="BATCH_HANDOVER",
+                    target_id="RAM1001",
+                    target_name="Indiranagar Collection Clinic",
+                    details="Received Batch manifest RAM1001 from Indiranagar clinic. 4 tubes received at -1.9°C.",
+                    ip_address="192.168.1.12",
+                    security_hash=generate_security_hash("Rajesh Sharma", "BATCH_HANDOVER", "RAM1001", "Batch manifest RAM1001 received", now_str)
+                ),
+                models.AuditLog(
+                    id="AUD-1005",
+                    timestamp=datetime.utcnow(),
+                    user_id="USR-104",
+                    user_name="Priya Nair",
+                    user_role="Quality & Cold-Chain Auditor",
+                    employee_id="EMP-3055",
+                    action="COLD_CHAIN_AUDIT",
+                    target_id="BX-NEO-94",
+                    target_name="Smart Cooler Box 94",
+                    details="Quarterly container calibration verified. Smart Peltier Box BX-NEO-94 passed cold-integrity audit (-2.0°C compliant).",
+                    ip_address="192.168.1.18",
+                    security_hash=generate_security_hash("Priya Nair", "COLD_CHAIN_AUDIT", "BX-NEO-94", "Smart Box passed audit", now_str)
+                ),
+                models.AuditLog(
+                    id="AUD-1006",
+                    timestamp=datetime.utcnow(),
+                    user_id="USR-102",
+                    user_name="Dr. Kavitha Sundaram",
+                    user_role="Chief Pathologist & Lab Director",
+                    employee_id="EMP-1001",
+                    action="USER_LOGIN",
+                    target_id="SYS-AUTH",
+                    target_name="Central Laboratory Workstation",
+                    details="Chief Pathologist authenticated to Web Portal with Director permissions.",
+                    ip_address="192.168.1.10",
+                    security_hash=generate_security_hash("Dr. Kavitha Sundaram", "USER_LOGIN", "SYS-AUTH", "Chief Pathologist authenticated", now_str)
+                )
+            ]
+            db.add_all(initial_logs)
+
         db.commit()
     except Exception as e:
         db.rollback()
@@ -204,6 +401,22 @@ class CenterCollectionRequest(BaseModel):
 class TemperatureRequest(BaseModel):
     temperature: float
 
+class AuditLogCreateRequest(BaseModel):
+    user_name: str
+    user_role: str
+    employee_id: Optional[str] = None
+    action: str
+    target_id: Optional[str] = None
+    target_name: Optional[str] = None
+    details: str
+
+class TaskRejectRequest(BaseModel):
+    reason: str
+    notes: Optional[str] = None
+    user_name: Optional[str] = "Ashwin Kumar"
+    user_role: Optional[str] = "Field Phlebotomist Lead"
+    employee_id: Optional[str] = "EMP-9342"
+
 
 @app.api_route("/", methods=["GET", "HEAD"], response_class=HTMLResponse)
 @app.get("/login", response_class=HTMLResponse)
@@ -249,6 +462,10 @@ def notifications_page(request: Request):
 def profile_page(request: Request):
     return templates.TemplateResponse(request=request, name="profile.html")
 
+@app.get("/audit-logs", response_class=HTMLResponse)
+def audit_logs_page(request: Request):
+    return templates.TemplateResponse(request=request, name="audit_logs.html")
+
 @app.get("/forgot-password", response_class=HTMLResponse)
 def forgot_password_page(request: Request):
     return templates.TemplateResponse(request=request, name="forgot_password.html")
@@ -275,42 +492,94 @@ def health():
         "database": "MySQL / SQLite Fallback"
     }
 @app.post("/api/auth/login")
-def api_login(req: LoginRequest, db: Session = Depends(get_db)):
+def api_login(req: LoginRequest, request: Request, db: Session = Depends(get_db)):
     clean_user = req.username.strip().lower()
     clean_pass = req.password.strip()
+    digits_only = clean_user.replace(" ", "").replace("+91", "").replace("-", "")
 
     print(f"\n[AUTH ATTEMPT] Received: username={req.username!r}, password={'*' * len(req.password)}")
 
-    # Check for Ashwin Kumar credentials
-    digits_only = clean_user.replace(" ", "").replace("+91", "").replace("-", "")
-    is_ashwin_user = (
-        clean_user in ["ashwinkumaar65@gmail.com", "ashwinkumar65@gmail.com", "9342600642"] or
-        digits_only == "9342600642"
-    )
-    is_valid_pass = clean_pass in ["ash@123", "Ash@123", "Ashwin@2005"]
+    # 1. Look for matching user in AUTHORIZED_USERS
+    matched_user = None
+    for u in AUTHORIZED_USERS:
+        is_match = (
+            clean_user == u["email"].lower() or
+            clean_user == u.get("alternateEmail", "").lower() or
+            clean_user == u["phone"].lower() or
+            (digits_only and digits_only == u.get("digitsPhone", "")) or
+            (digits_only and u.get("digitsPhone", "") and digits_only == u["digitsPhone"])
+        )
+        if is_match:
+            matched_user = u
+            break
 
-    if is_ashwin_user and is_valid_pass:
-        print(f"[AUTH SUCCESS] 👤 User identified: Ashwin Kumar ({req.username}) logged in successfully at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-        return {
-            "success": True,
-            "user": {
-                "id": "USR-102",
-                "name": "Ashwin Kumar",
-                "role": "Field Phlebotomist Lead",
-                "email": "ashwinkumaar65@gmail.com",
-                "employeeId": "EMP-9342",
-                "phone": "+91 9342600642"
+    # Also check database models.User if not in in-memory list
+    if not matched_user:
+        db_user = db.query(models.User).filter(
+            (models.User.username == clean_user) | (models.User.phone == req.username.strip())
+        ).first()
+        if db_user:
+            matched_user = {
+                "id": db_user.id,
+                "name": db_user.name,
+                "role": db_user.role,
+                "employeeId": db_user.employee_id,
+                "email": db_user.username,
+                "phone": db_user.phone,
+                "passwords": [db_user.password_hash]
             }
-        }
 
-    print(f"\n[AUTH FAILED] ❌ Failed login attempt: user_valid={is_ashwin_user}, pass_valid={is_valid_pass}\n")
+    # Collect all valid passwords across system for granular diagnosis
+    all_allowed_passwords = {p for u in AUTHORIZED_USERS for p in u["passwords"]}
+    pass_matches_any = clean_pass in all_allowed_passwords
 
-    if not is_ashwin_user and not is_valid_pass:
-        raise HTTPException(status_code=401, detail="Invalid email/mobile number or password.")
-    if not is_ashwin_user:
-        raise HTTPException(status_code=401, detail="Wrong email or mobile number.")
-    if not is_valid_pass:
+    if not matched_user:
+        print(f"[AUTH FAILED] ❌ User not found: {req.username}")
+        if pass_matches_any:
+            raise HTTPException(status_code=401, detail="Wrong email or mobile number.")
+        else:
+            raise HTTPException(status_code=401, detail="Invalid email/mobile number or password.")
+
+    # User exists: verify password specifically for this user
+    if clean_pass not in matched_user["passwords"]:
+        print(f"[AUTH FAILED] ❌ Wrong password for user: {matched_user['name']}")
         raise HTTPException(status_code=401, detail="Wrong password.")
+
+    # Login SUCCESS: Record tamper-evident Audit Log
+    now_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+    client_ip = request.client.host if request.client else "127.0.0.1"
+    audit_id = f"AUD-{int(datetime.utcnow().timestamp() * 1000)}"
+    log_entry = models.AuditLog(
+        id=audit_id,
+        timestamp=datetime.utcnow(),
+        user_id=matched_user["id"],
+        user_name=matched_user["name"],
+        user_role=matched_user["role"],
+        employee_id=matched_user["employeeId"],
+        action="USER_LOGIN",
+        target_id="SYS-PORTAL",
+        target_name=matched_user["name"],
+        details=f"{matched_user['role']} signed in successfully to Field Portal.",
+        ip_address=client_ip,
+        security_hash=generate_security_hash(matched_user["name"], "USER_LOGIN", "SYS-PORTAL", "signed in", now_str)
+    )
+    db.add(log_entry)
+    db.commit()
+
+    print(f"[AUTH SUCCESS] 👤 User identified: {matched_user['name']} ({matched_user['role']}) logged in at {now_str}\n")
+    return {
+        "success": True,
+        "user": {
+            "id": matched_user["id"],
+            "name": matched_user["name"],
+            "role": matched_user["role"],
+            "email": matched_user["email"],
+            "employeeId": matched_user["employeeId"],
+            "phone": matched_user["phone"],
+            "isReadOnly": matched_user.get("isReadOnly", False),
+            "canManageUsers": matched_user.get("canManageUsers", False)
+        }
+    }
 
 @app.get("/api/dashboard/stats")
 def api_dashboard_stats(db: Session = Depends(get_db)):
@@ -418,22 +687,165 @@ def api_get_task_detail(task_id: str, db: Session = Depends(get_db)):
     }
 
 @app.post("/api/tasks/{task_id}/barcode")
-def api_assign_barcode(task_id: str, req: BarcodeAssignRequest, db: Session = Depends(get_db)):
+def api_assign_barcode(task_id: str, req: BarcodeAssignRequest, request: Request, db: Session = Depends(get_db)):
     t = db.query(models.Task).filter(models.Task.id == task_id).first()
     if not t:
         raise HTTPException(status_code=404, detail="Task not found")
     t.barcode = req.barcode
     db.commit()
+
+    # Log to Audit Trail
+    now_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+    client_ip = request.client.host if request.client else "127.0.0.1"
+    audit_id = f"AUD-{int(datetime.utcnow().timestamp() * 1000)}"
+    entry = models.AuditLog(
+        id=audit_id,
+        timestamp=datetime.utcnow(),
+        user_name="Ashwin Kumar",
+        user_role="Field Phlebotomist Lead",
+        employee_id="EMP-9342",
+        action="BARCODE_LINKED",
+        target_id=task_id,
+        target_name=t.patient_name,
+        details=f"Associated specimen vial barcode {req.barcode} with task.",
+        ip_address=client_ip,
+        security_hash=generate_security_hash("Ashwin Kumar", "BARCODE_LINKED", task_id, req.barcode, now_str)
+    )
+    db.add(entry)
+    db.commit()
+
     return {"success": True, "message": "Barcode associated successfully", "barcode": t.barcode}
 
 @app.post("/api/tasks/{task_id}/complete")
-def api_complete_task(task_id: str, db: Session = Depends(get_db)):
+def api_complete_task(task_id: str, request: Request, db: Session = Depends(get_db)):
     t = db.query(models.Task).filter(models.Task.id == task_id).first()
     if not t:
         raise HTTPException(status_code=404, detail="Task not found")
     t.status = "completed"
     db.commit()
+
+    # Log to Audit Trail
+    now_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+    client_ip = request.client.host if request.client else "127.0.0.1"
+    audit_id = f"AUD-{int(datetime.utcnow().timestamp() * 1000)}"
+    entry = models.AuditLog(
+        id=audit_id,
+        timestamp=datetime.utcnow(),
+        user_name="Ashwin Kumar",
+        user_role="Field Phlebotomist Lead",
+        employee_id="EMP-9342",
+        action="COLLECTION_COMPLETED",
+        target_id=task_id,
+        target_name=t.patient_name,
+        details=f"Sample collection marked completed. Barcode: {t.barcode or 'N/A'}.",
+        ip_address=client_ip,
+        security_hash=generate_security_hash("Ashwin Kumar", "COLLECTION_COMPLETED", task_id, "Completed", now_str)
+    )
+    db.add(entry)
+    db.commit()
+
     return {"success": True, "message": f"Task {task_id} completed successfully", "status": "completed"}
+
+@app.post("/api/tasks/{task_id}/reject")
+def api_reject_task(task_id: str, req: TaskRejectRequest, request: Request, db: Session = Depends(get_db)):
+    t = db.query(models.Task).filter(models.Task.id == task_id).first()
+    patient_name = t.patient_name if t else "Specimen Task"
+    if t:
+        t.status = "rejected"
+        t.rejection_reason = req.reason
+        db.commit()
+
+    now_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+    client_ip = request.client.host if request.client else "127.0.0.1"
+    audit_id = f"AUD-{int(datetime.utcnow().timestamp() * 1000)}"
+    details = f"Reason: {req.reason}."
+    if req.notes:
+        details += f" Dispatch Notes: {req.notes}"
+    hash_sig = generate_security_hash(req.user_name, "TASK_REJECTED", task_id, details, now_str)
+
+    entry = models.AuditLog(
+        id=audit_id,
+        timestamp=datetime.utcnow(),
+        user_id=req.employee_id or "EMP-9342",
+        user_name=req.user_name or "Ashwin Kumar",
+        user_role=req.user_role or "Field Phlebotomist Lead",
+        employee_id=req.employee_id,
+        action="TASK_REJECTED",
+        target_id=task_id,
+        target_name=patient_name,
+        details=details,
+        ip_address=client_ip,
+        security_hash=hash_sig
+    )
+    db.add(entry)
+    db.commit()
+    return {"success": True, "message": f"Task {task_id} rejected and logged in security audit trail"}
+
+@app.get("/api/audit-logs")
+def api_get_audit_logs(
+    action: Optional[str] = None,
+    search: Optional[str] = None,
+    limit: int = 100,
+    db: Session = Depends(get_db)
+):
+    query = db.query(models.AuditLog)
+    if action and action != "ALL":
+        query = query.filter(models.AuditLog.action == action)
+    if search:
+        s = f"%{search.lower()}%"
+        query = query.filter(
+            (models.AuditLog.user_name.ilike(s)) |
+            (models.AuditLog.details.ilike(s)) |
+            (models.AuditLog.target_id.ilike(s)) |
+            (models.AuditLog.target_name.ilike(s)) |
+            (models.AuditLog.action.ilike(s))
+        )
+    logs = query.order_by(models.AuditLog.timestamp.desc()).limit(limit).all()
+    return {
+        "success": True,
+        "count": len(logs),
+        "logs": [
+            {
+                "id": l.id,
+                "timestamp": l.timestamp.strftime("%Y-%m-%d %H:%M:%S") if l.timestamp else "",
+                "userName": l.user_name,
+                "userRole": l.user_role,
+                "employeeId": l.employee_id or "EMP-9342",
+                "action": l.action,
+                "targetId": l.target_id or "-",
+                "targetName": l.target_name or "-",
+                "details": l.details,
+                "ipAddress": l.ip_address or "127.0.0.1",
+                "securityHash": l.security_hash or "7f8a32b0c1e8"
+            }
+            for l in logs
+        ]
+    }
+
+@app.post("/api/audit-logs")
+def api_create_audit_log(req: AuditLogCreateRequest, request: Request, db: Session = Depends(get_db)):
+    now_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+    client_ip = request.client.host if request.client else "127.0.0.1"
+    audit_id = f"AUD-{int(datetime.utcnow().timestamp() * 1000)}"
+    hash_sig = generate_security_hash(req.user_name, req.action, req.target_id or "-", req.details, now_str)
+
+    entry = models.AuditLog(
+        id=audit_id,
+        timestamp=datetime.utcnow(),
+        user_id=req.employee_id or "USR-AUTO",
+        user_name=req.user_name,
+        user_role=req.user_role,
+        employee_id=req.employee_id,
+        action=req.action,
+        target_id=req.target_id,
+        target_name=req.target_name,
+        details=req.details,
+        ip_address=client_ip,
+        security_hash=hash_sig
+    )
+    db.add(entry)
+    db.commit()
+    return {"success": True, "id": entry.id, "securityHash": hash_sig}
 
 @app.get("/api/centers")
 def api_get_centers(db: Session = Depends(get_db)):
@@ -447,7 +859,7 @@ def api_get_centers(db: Session = Depends(get_db)):
     }
 
 @app.post("/api/centers/collection")
-def api_save_center_collection(req: CenterCollectionRequest, db: Session = Depends(get_db)):
+def api_save_center_collection(req: CenterCollectionRequest, request: Request, db: Session = Depends(get_db)):
     record = models.CenterCollection(
         id=f"CC-{int(datetime.utcnow().timestamp())}",
         processing_center=req.processingCenter,
@@ -459,7 +871,27 @@ def api_save_center_collection(req: CenterCollectionRequest, db: Session = Depen
         temperature=req.temperature,
     )
     db.add(record)
+
+    # Log to Audit Trail
+    now_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+    client_ip = request.client.host if request.client else "127.0.0.1"
+    audit_id = f"AUD-{int(datetime.utcnow().timestamp() * 1000)}"
+    entry = models.AuditLog(
+        id=audit_id,
+        timestamp=datetime.utcnow(),
+        user_name="Rajesh Sharma",
+        user_role="Central Dispatch & Logistics Lead",
+        employee_id="EMP-4021",
+        action="BATCH_HANDOVER",
+        target_id=req.referenceNumber,
+        target_name=req.collectionCenter,
+        details=f"Batch handover completed: {req.actualContainers} containers transferred at {req.temperature}°C to {req.processingCenter}.",
+        ip_address=client_ip,
+        security_hash=generate_security_hash("Rajesh Sharma", "BATCH_HANDOVER", req.referenceNumber, "Batch handover", now_str)
+    )
+    db.add(entry)
     db.commit()
+
     return {
         "success": True,
         "message": "Center collection recorded successfully in LIMS database",

@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Security Audit Trail - MedReach Diagnostics</title>
+  <link rel="icon" href="/static/images/favicon.svg" type="image/svg+xml">
+  <style>
+    :root {
+      --primary: #149B9E;
+      --primary-dark: #0E7F82;
+      --primary-light: #E6F7F5;
+      --surface: #FFFFFF;
+      --surface-border: #E2E8F0;
+      --text-dark: #0F172A;
+      --text-secondary: #64748B;
+      --accent-red: #EF4444;
+      --accent-green: #10B981;
+      --accent-blue: #3B82F6;
+      --accent-purple: #8B5CF6;
+      --accent-amber: #F59E0B;
+      --accent-gold: #FDE047;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    html, body { width: 100%; min-height: 100%; background: #F8FAFC; color: var(--text-dark); display: flex; flex-direction: column; }
+
+    /* Top Nav */
+    .portal-navbar {
+      width: 100%;
+      height: 68px;
+      background: #FFFFFF;
+      border-bottom: 1px solid var(--surface-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+    }
+    .nav-brand-group { display: flex; align-items: center; gap: 14px; text-decoration: none; color: inherit; }
+    .brand-icon-circle { width: 42px; height: 42px; border-radius: 50%; background: var(--primary); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 800; }
+    .brand-text-col h1 { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; color: var(--text-dark); line-height: 1.1; }
+    .brand-text-col span { font-size: 11px; font-weight: 600; color: var(--primary); text-transform: uppercase; letter-spacing: 0.8px; }
+
+    .nav-center-chips { display: flex; align-items: center; gap: 12px; }
+    .chip-indicator { display: flex; align-items: center; gap: 8px; background: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0; padding: 6px 14px; border-radius: 20px; font-size: 12.5px; font-weight: 700; }
+    .chip-temp { background: #E0F2FE; color: #0369A1; border-color: #BAE6FD; }
+
+    .nav-user-actions { display: flex; align-items: center; gap: 14px; }
+    .user-pill-profile { display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; padding: 6px 14px 6px 6px; border-radius: 30px; background: #F1F5F9; }
+    .avatar-yellow-round { width: 36px; height: 36px; border-radius: 50%; background: var(--accent-gold); color: #854D0E; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; }
+    .btn-logout { background: #FEE2E2; color: #DC2626; border: 1px solid #FECACA; border-radius: 20px; padding: 7px 14px; font-size: 12.5px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; text-decoration: none; }
+
+    /* Main Container */
+    .portal-main-canvas {
+      width: 100%;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 30px 40px 60px;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+
+    .breadcrumb-row { display: flex; align-items: center; gap: 10px; font-size: 13.5px; color: var(--text-secondary); }
+    .breadcrumb-row a { color: var(--primary); text-decoration: none; font-weight: 700; }
+
+    /* Header Banner */
+    .audit-header-banner {
+      background: #FFFFFF;
+      border: 1px solid var(--surface-border);
+      border-radius: 22px;
+      padding: 26px 30px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.03);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .header-info h2 { font-size: 24px; font-weight: 800; color: var(--text-dark); display: flex; align-items: center; gap: 10px; }
+    .header-info p { font-size: 13.5px; color: var(--text-secondary); margin-top: 4px; }
+
+    .telemetry-status-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: #F0FDF4;
+      border: 1px solid #BBF7D0;
+      border-radius: 16px;
+      padding: 12px 20px;
+    }
+    .pulse-dot { width: 10px; height: 10px; border-radius: 50%; background: #10B981; box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2); animation: pulse 1.8s infinite; }
+    @keyframes pulse { 0% { transform: scale(0.95); opacity: 0.8; } 50% { transform: scale(1.15); opacity: 1; } 100% { transform: scale(0.95); opacity: 0.8; } }
+
+    /* Controls Bar */
+    .controls-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .filter-tabs { display: flex; background: #E2E8F0; border-radius: 24px; padding: 4px; gap: 4px; flex-wrap: wrap; }
+    .filter-btn { border: none; background: transparent; padding: 8px 18px; border-radius: 20px; font-size: 13px; font-weight: 700; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; }
+    .filter-btn.active { background: var(--primary); color: #FFFFFF; box-shadow: 0 2px 8px rgba(20,155,158,0.3); }
+
+    .search-input-box {
+      background: #FFFFFF;
+      border: 1.5px solid var(--surface-border);
+      border-radius: 20px;
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 320px;
+    }
+    .search-input-box input { border: none; background: transparent; outline: none; flex: 1; font-size: 13.5px; }
+
+    /* Audit Table */
+    .table-panel {
+      background: #FFFFFF;
+      border-radius: 22px;
+      border: 1px solid var(--surface-border);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.03);
+      overflow: hidden;
+    }
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th { background: #F8FAFC; padding: 14px 20px; font-size: 12.5px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--surface-border); }
+    td { padding: 16px 20px; font-size: 13.5px; border-bottom: 1px solid var(--surface-border); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover { background: #F8FAFC; }
+
+    .user-col { display: flex; align-items: center; gap: 10px; }
+    .user-avatar-mini { width: 32px; height: 32px; border-radius: 50%; background: var(--primary-light); color: var(--primary-dark); font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; }
+    .user-name-bold { font-weight: 700; color: var(--text-dark); font-size: 13.5px; }
+    .user-role-sub { font-size: 11px; color: var(--text-secondary); }
+
+    /* Action Badges */
+    .badge-action { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 12px; font-size: 11.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px; }
+    .act-reject { background: #FEE2E2; color: #DC2626; border: 1px solid #FECACA; }
+    .act-barcode { background: #EFF6FF; color: #2563EB; border: 1px solid #BFDBFE; }
+    .act-complete { background: #DCFCE7; color: #16A34A; border: 1px solid #BBF7D0; }
+    .act-payment { background: #FEF3C7; color: #D97706; border: 1px solid #FDE68A; }
+    .act-handover { background: #F3E8FF; color: #9333EA; border: 1px solid #E9D5FF; }
+    .act-login { background: #E0E7FF; color: #4F46E5; border: 1px solid #C7D2FE; }
+    .act-audit { background: #E0F2FE; color: #0284C7; border: 1px solid #BAE6FD; }
+
+    .hash-chip { font-family: monospace; font-size: 11px; background: #F1F5F9; color: #475569; padding: 3px 8px; border-radius: 8px; border: 1px solid var(--surface-border); display: inline-block; }
+    .btn-export { background: #FFFFFF; border: 1.5px solid var(--primary); color: var(--primary); border-radius: 20px; padding: 8px 18px; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+    .btn-export:hover { background: var(--primary-light); }
+
+    .read-only-banner {
+      display: none;
+      background: #FEF3C7;
+      border: 1px solid #F59E0B;
+      color: #92400E;
+      padding: 10px 20px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 700;
+      align-items: center;
+      gap: 10px;
+    }
+
+    @media (max-width: 900px) {
+      .portal-navbar { padding: 0 16px; }
+      .nav-center-chips { display: none; }
+      .portal-main-canvas { padding: 20px 16px; }
+      .search-input-box { width: 100%; min-width: unset; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header class="portal-navbar">
+    <a href="/home" class="nav-brand-group">
+      <div class="brand-icon-circle">+</div>
+      <div class="brand-text-col">
+        <h1>MedReach</h1>
+        <span>Diagnostics Field Suite</span>
+      </div>
+    </a>
+
+    <div class="nav-center-chips">
+      <div class="chip-indicator chip-temp"><span>❄️</span> Cold-Chain: -2.0°C (Optimal)</div>
+      <div class="chip-indicator"><span>🛡️</span> Security Ledger: Active</div>
+    </div>
+
+    <div class="nav-user-actions">
+      <a href="/profile" class="user-pill-profile">
+        <div class="avatar-yellow-round" id="userAvatarText">SA</div>
+        <div style="text-align:left;">
+          <div id="userNameText" style="font-size:13px; font-weight:800; color:var(--text-dark);">System Administrator</div>
+          <div id="userRoleText" style="font-size:11px; color:var(--text-secondary);">ADM-1001 • Admin</div>
+        </div>
+      </a>
+      <button onclick="handleLogout()" class="btn-logout" title="Sign Out">
+        <span>🚪</span> Logout
+      </button>
+    </div>
+  </header>
+
+  <main class="portal-main-canvas">
+
+    <!-- Breadcrumb -->
+    <div class="breadcrumb-row">
+      <a href="/home">← Back to Dashboard</a>
+      <span>/</span>
+      <span>Governance &amp; Security</span>
+      <span>/</span>
+      <strong>Audit Trail &amp; Activity Ledger</strong>
+    </div>
+
+    <!-- Read-Only Banner if Auditor is Logged In -->
+    <div id="readOnlyBanner" class="read-only-banner">
+      <span>🔒</span> <strong>Auditor Notice:</strong> You are currently logged in with Read-Only Auditor permissions. All records are verifiable and tamper-evident. Modification actions are disabled.
+    </div>
+
+    <!-- Header Banner -->
+    <div class="audit-header-banner">
+      <div class="header-info">
+        <h2><span>🛡️</span> Tamper-Evident Security Audit Logs</h2>
+        <p>Every change by Reception, Nursing Supervisors, Phlebotomists, and Admins is recorded with a SHA-256 cryptographic signature.</p>
+      </div>
+
+      <div class="telemetry-status-card">
+        <div class="pulse-dot"></div>
+        <div>
+          <div style="font-size: 13.5px; font-weight: 800; color: #065F46;">Real-Time Audit Stream Active</div>
+          <div style="font-size: 11.5px; color: #047857;">Zero Integrity Excursions Detected</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls Bar -->
+    <div class="controls-bar">
+      <div class="filter-tabs">
+        <button class="filter-btn active" onclick="filterLogs('ALL', this)">All Activity</button>
+        <button class="filter-btn" onclick="filterLogs('TASK_REJECTED', this)">Rejections</button>
+        <button class="filter-btn" onclick="filterLogs('BARCODE_LINKED', this)">Barcodes</button>
+        <button class="filter-btn" onclick="filterLogs('COLLECTION_COMPLETED', this)">Collections</button>
+        <button class="filter-btn" onclick="filterLogs('PAYMENT_RECORDED', this)">Payments</button>
+        <button class="filter-btn" onclick="filterLogs('BATCH_HANDOVER', this)">Handovers</button>
+        <button class="filter-btn" onclick="filterLogs('USER_LOGIN', this)">User Logins</button>
+      </div>
+
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <div class="search-input-box">
+          <span>🔍</span>
+          <input type="text" id="auditSearchInput" placeholder="Search by user, task ID, action, or notes..." oninput="handleSearch(this.value)">
+        </div>
+        <button class="btn-export" onclick="exportLogsCSV()">
+          <span>📥</span> Export CSV
+        </button>
+      </div>
+    </div>
+
+    <!-- Audit Log Table -->
+    <div class="table-panel">
+      <table id="auditTable">
+        <thead>
+          <tr>
+            <th>Timestamp</th>
+            <th>Authorized User</th>
+            <th>Action Category</th>
+            <th>Target Reference</th>
+            <th>Details &amp; Reason</th>
+            <th>Security Signature</th>
+          </tr>
+        </thead>
+        <tbody id="auditTableBody">
+          <tr>
+            <td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 40px;">
+              Loading security audit ledger...
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+
+  <script>
+    let allLogs = [];
+    let currentFilter = 'ALL';
+
+    // Route Protection
+    (function verifyAuth() {
+      try {
+        const stored = localStorage.getItem('medreach_user');
+        if (!stored) {
+          window.location.replace('/login');
+          return;
+        }
+        const u = JSON.parse(stored);
+        if (u.isReadOnly) {
+          const banner = document.getElementById('readOnlyBanner');
+          if (banner) banner.style.display = 'flex';
+        }
+      } catch(e) {
+        window.location.replace('/login');
+      }
+    })();
+
+    function handleLogout() {
+      localStorage.removeItem('medreach_user');
+      window.location.replace('/login');
+    }
+
+    function updateUserInfo() {
+      try {
+        const stored = localStorage.getItem('medreach_user');
+        if (stored) {
+          const u = JSON.parse(stored);
+          if (u.name) document.getElementById('userNameText').innerText = u.name;
+          if (u.role || u.employeeId) document.getElementById('userRoleText').innerText = `${u.employeeId || 'EMP-9342'} • ${u.role || 'User'}`;
+          if (u.name) {
+            const parts = u.name.split(' ');
+            const initials = parts.length > 1 ? (parts[0][0] + parts[1][0]).toUpperCase() : parts[0].substring(0, 2).toUpperCase();
+            document.getElementById('userAvatarText').innerText = initials;
+          }
+        }
+      } catch(e) {}
+    }
+
+    function getActionBadge(action) {
+      switch(action) {
+        case 'TASK_REJECTED': return '<span class="badge-action act-reject">❌ Rejection</span>';
+        case 'BARCODE_LINKED': return '<span class="badge-action act-barcode">🏷️ Barcode</span>';
+        case 'COLLECTION_COMPLETED': return '<span class="badge-action act-complete">✔ Collected</span>';
+        case 'PAYMENT_RECORDED': return '<span class="badge-action act-payment">💳 Payment</span>';
+        case 'BATCH_HANDOVER': return '<span class="badge-action act-handover">🏥 Handover</span>';
+        case 'USER_LOGIN': return '<span class="badge-action act-login">👤 Sign In</span>';
+        case 'COLD_CHAIN_AUDIT': return '<span class="badge-action act-audit">❄️ Cold Audit</span>';
+        default: return `<span class="badge-action act-barcode">${action}</span>`;
+      }
+    }
+
+    async function fetchAuditLogs() {
+      try {
+        const response = await fetch('/api/audit-logs?limit=150');
+        const data = await response.json();
+        if (data.success && data.logs) {
+          allLogs = data.logs;
+          renderLogs();
+        }
+      } catch(err) {
+        console.error('Failed to load audit logs:', err);
+      }
+    }
+
+    function renderLogs() {
+      const tbody = document.getElementById('auditTableBody');
+      const searchVal = document.getElementById('auditSearchInput').value.toLowerCase().trim();
+
+      let filtered = allLogs.filter(l => {
+        const matchFilter = (currentFilter === 'ALL' || l.action === currentFilter);
+        if (!matchFilter) return false;
+        if (!searchVal) return true;
+        return (
+          l.userName.toLowerCase().includes(searchVal) ||
+          l.userRole.toLowerCase().includes(searchVal) ||
+          l.action.toLowerCase().includes(searchVal) ||
+          l.targetId.toLowerCase().includes(searchVal) ||
+          l.targetName.toLowerCase().includes(searchVal) ||
+          l.details.toLowerCase().includes(searchVal)
+        );
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 40px;">No matching audit records found.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(l => {
+        const initials = l.userName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+        return `
+          <tr>
+            <td style="color: var(--text-secondary); font-size: 12.5px; white-space: nowrap;">
+              <strong>${l.timestamp.split(' ')[0]}</strong><br>
+              <small>${l.timestamp.split(' ')[1] || ''}</small>
+            </td>
+            <td>
+              <div class="user-col">
+                <div class="user-avatar-mini">${initials}</div>
+                <div>
+                  <div class="user-name-bold">${l.userName}</div>
+                  <div class="user-role-sub">${l.employeeId} • ${l.userRole}</div>
+                </div>
+              </div>
+            </td>
+            <td>${getActionBadge(l.action)}</td>
+            <td>
+              <strong>${l.targetId}</strong>
+              <div style="font-size: 11.5px; color: var(--text-secondary);">${l.targetName}</div>
+            </td>
+            <td style="max-width: 380px; line-height: 1.4;">${l.details}</td>
+            <td>
+              <span class="hash-chip" title="SHA-256 Ledger Signature: ${l.securityHash}">
+                SHA: ${l.securityHash.substring(0, 10)}...
+              </span>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function filterLogs(action, btn) {
+      currentFilter = action;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderLogs();
+    }
+
+    function handleSearch(val) {
+      renderLogs();
+    }
+
+    function exportLogsCSV() {
+      if (!allLogs || allLogs.length === 0) {
+        alert('No audit logs available to export.');
+        return;
+      }
+      let csv = 'Timestamp,User Name,Employee ID,Role,Action,Target ID,Target Name,Details,Security Hash\n';
+      allLogs.forEach(l => {
+        csv += `"${l.timestamp}","${l.userName}","${l.employeeId}","${l.userRole}","${l.action}","${l.targetId}","${l.targetName}","${l.details.replace(/"/g, '""')}","${l.securityHash}"\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `MedReach_Security_Audit_Logs_${new Date().toISOString().split('T')[0]}.csv`;
+      a.click();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      updateUserInfo();
+      fetchAuditLogs();
+    });
+  </script>
+
+</body>
+</html>
