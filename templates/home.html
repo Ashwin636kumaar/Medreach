@@ -126,6 +126,29 @@
     .toast-message.success { border-left: 4px solid #10B981; }
     .toast-message.info { border-left: 4px solid #3B82F6; }
     @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+    .branch-filter-btn {
+      background: rgba(255,255,255,0.12);
+      color: #E0E7FF;
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .branch-filter-btn:hover {
+      background: rgba(255,255,255,0.22);
+      color: #FFFFFF;
+    }
+    .branch-filter-btn.active {
+      background: #38BDF8;
+      color: #0F172A;
+      border-color: #38BDF8;
+      font-weight: 800;
+      box-shadow: 0 2px 8px rgba(56,189,248,0.4);
+    }
   </style>
 </head>
 <body>
@@ -165,6 +188,38 @@
     <!-- Auditor Read-Only Banner -->
     <div id="auditorWarningBanner" style="display:none; background:#FEF3C7; border:1px solid #F59E0B; border-radius:16px; padding:12px 20px; color:#92400E; font-size:13.5px; font-weight:700; align-items:center; gap:10px;">
       <span>🔒</span> <strong>Auditor Mode Active:</strong> You are browsing in Read-Only Audit view. Modification actions and specimen cancellation are restricted.
+    </div>
+
+    <!-- Super Admin Multi-Branch Switcher & Status Bar -->
+    <div id="superAdminBranchBar" style="display:none; background: linear-gradient(135deg, #1E1B4B 0%, #312E81 100%); border-radius: 18px; padding: 16px 24px; color: #FFFFFF; box-shadow: 0 4px 16px rgba(49,46,129,0.25); align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <span style="font-size:24px;">👑</span>
+        <div>
+          <div style="font-size:15px; font-weight:800; letter-spacing:0.3px;">MedPlus Super Admin Control HUD</div>
+          <div style="font-size:12px; color:#C7D2FE;">Cross-Branch Overview &bull; All 3 Branches: Vadapalani, Velachery &amp; Anna Nagar</div>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+        <span style="font-size:12px; font-weight:700; color:#E0E7FF; margin-right:4px;">Filter Branch:</span>
+        <button onclick="setSuperAdminBranch('all', this)" class="branch-filter-btn active" id="btnBranchAll">🌐 All 3 Branches</button>
+        <button onclick="setSuperAdminBranch('BR-VADAPALANI', this)" class="branch-filter-btn" id="btnBranchVdp">📍 Vadapalani</button>
+        <button onclick="setSuperAdminBranch('BR-VELACHERY', this)" class="branch-filter-btn" id="btnBranchVlc">📍 Velachery</button>
+        <button onclick="setSuperAdminBranch('BR-ANNANAGAR', this)" class="branch-filter-btn" id="btnBranchAnr">📍 Anna Nagar</button>
+      </div>
+    </div>
+
+    <!-- Branch Owner Dedicated Portal Banner -->
+    <div id="branchOwnerBanner" style="display:none; background: linear-gradient(135deg, #064E3B 0%, #047857 100%); border-radius: 18px; padding: 16px 24px; color: #FFFFFF; box-shadow: 0 4px 16px rgba(4,120,87,0.2); align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <span style="font-size:24px;">🏢</span>
+        <div>
+          <div style="font-size:15.5px; font-weight:800;" id="branchOwnerTitle">MedPlus Vadapalani Branch Portal</div>
+          <div style="font-size:12px; color:#A7F3D0;" id="branchOwnerSubtitle">Branch Director Access &bull; Restricted strictly to Vadapalani patients &amp; cold-chain custody</div>
+        </div>
+      </div>
+      <div style="background:rgba(255,255,255,0.18); padding:6px 14px; border-radius:20px; font-size:12px; font-weight:700; border:1px solid rgba(255,255,255,0.3); letter-spacing:0.3px;">
+        🔒 Branch Isolation Enforced
+      </div>
     </div>
 
     <!-- Futuristic Telemetry & AI SLA HUD -->
@@ -391,15 +446,22 @@
   </main>
 
 <script>
-  const appState = { activeTab: 'pending', query: '', tasks: [] };
+  const appState = {
+    activeTab: 'pending',
+    query: '',
+    selectedBranch: 'all',
+    tasks: [],
+    currentUser: null
+  };
+
   const SAMPLE_TASKS = [
-    { id: 'TK-209312', patientName: 'Priya Venkatesh', patientAge: 32, patientGender: 'Female', address: 'Flat 4/B, Sunrise Apartments, Koramangala 5th Block, Bengaluru', scheduledTime: '09:30 AM', distanceKm: 1.2, paymentStatus: 'PAID', amount: 988,  assays: 'CBC + Thyroid Profile',   referenceNumber: 'RAM1001', status: 'pending' },
-    { id: 'TK-209313', patientName: 'Rajesh Sharma',   patientAge: 45, patientGender: 'Male',   address: 'Plot 102, Green Glen Layout, Bellandur, Bengaluru',            scheduledTime: '10:15 AM', distanceKm: 2.4, paymentStatus: 'DUE',  amount: 1450, assays: 'Diabetic Fasting Panel', referenceNumber: 'RAM1002', status: 'pending' },
-    { id: 'TK-209314', patientName: 'Anita Rao',       patientAge: 52, patientGender: 'Female', address: '32, 14th Main, HSR Layout Sector 4, Bengaluru',                scheduledTime: '11:00 AM', distanceKm: 3.1, paymentStatus: 'PAID', amount: 1600, assays: 'Lipid Profile Basic',    referenceNumber: 'RAM1003', status: 'pending' },
-    { id: 'TK-209315', patientName: 'Karthik Menon',   patientAge: 41, patientGender: 'Male',   address: 'B-204, Embassy Heights, Whitefield Main Road, Bengaluru',      scheduledTime: '11:45 AM', distanceKm: 6.3, paymentStatus: 'DUE',  amount: 850,  assays: 'Liver Function Test',    referenceNumber: 'RAM1004', status: 'pending' },
-    { id: 'TK-209301', patientName: 'Suresh Kumar',    patientAge: 61, patientGender: 'Male',   address: 'Villa 7, Prestige Lakeside, Varthur Road, Bengaluru',          scheduledTime: '07:45 AM', distanceKm: 4.0, paymentStatus: 'PAID', amount: 1200, assays: 'HbA1c + Kidney Function', referenceNumber: 'RAM0991', status: 'completed', completedAt: '08:05 AM' },
-    { id: 'TK-209302', patientName: 'Meena Iyer',      patientAge: 38, patientGender: 'Female', address: 'Flat 301, Brigade Gardens, JP Nagar 6th Phase, Bengaluru',     scheduledTime: '08:20 AM', distanceKm: 5.2, paymentStatus: 'PAID', amount: 640,  assays: 'Vitamin D + B12',        referenceNumber: 'RAM0992', status: 'completed', completedAt: '08:42 AM' },
-    { id: 'TK-209303', patientName: 'Arjun Nair',      patientAge: 29, patientGender: 'Male',   address: '55, 1st Main, Indiranagar, Bengaluru',                         scheduledTime: '09:00 AM', distanceKm: 1.8, paymentStatus: 'PAID', amount: 520,  assays: 'CBC',                    referenceNumber: 'RAM0993', status: 'completed', completedAt: '09:18 AM' }
+    { id: 'TK-209312', patientName: 'Priya Venkatesh', patientAge: 32, patientGender: 'Female', address: 'Flat 4/B, 100ft Road, Vadapalani, Chennai', scheduledTime: '09:30 AM', distanceKm: 1.2, paymentStatus: 'PAID', amount: 988,  assays: 'CBC + Thyroid Profile',   referenceNumber: 'RAM1001', status: 'pending', branchId: 'BR-VADAPALANI', branchName: 'MedPlus Vadapalani Branch' },
+    { id: 'TK-209313', patientName: 'Rajesh Sharma',   patientAge: 45, patientGender: 'Male',   address: 'Plot 102, Bypass Road, Velachery, Chennai',            scheduledTime: '10:15 AM', distanceKm: 2.4, paymentStatus: 'DUE',  amount: 1450, assays: 'Diabetic Fasting Panel', referenceNumber: 'RAM1002', status: 'pending', branchId: 'BR-VELACHERY', branchName: 'MedPlus Velachery Branch' },
+    { id: 'TK-209314', patientName: 'Anita Rao',       patientAge: 52, patientGender: 'Female', address: '32, 2nd Avenue, Roundtana, Anna Nagar, Chennai',                scheduledTime: '11:00 AM', distanceKm: 3.1, paymentStatus: 'PAID', amount: 1600, assays: 'Lipid Profile Basic',    referenceNumber: 'RAM1003', status: 'pending', branchId: 'BR-ANNANAGAR', branchName: 'MedPlus Anna Nagar Branch' },
+    { id: 'TK-209315', patientName: 'Karthik Menon',   patientAge: 41, patientGender: 'Male',   address: '77, Arcot Road, Vadapalani, Chennai',                  scheduledTime: '11:45 AM', distanceKm: 2.3, paymentStatus: 'DUE',  amount: 850,  assays: 'Liver Function Test',    referenceNumber: 'RAM1004', status: 'pending', branchId: 'BR-VADAPALANI', branchName: 'MedPlus Vadapalani Branch' },
+    { id: 'TK-209301', patientName: 'Suresh Kumar',    patientAge: 61, patientGender: 'Male',   address: 'Villa 7, 100ft Road, Vadapalani, Chennai',             scheduledTime: '07:45 AM', distanceKm: 1.5, paymentStatus: 'PAID', amount: 1200, assays: 'HbA1c + Kidney Function', referenceNumber: 'RAM0991', status: 'completed', completedAt: '08:05 AM', branchId: 'BR-VADAPALANI', branchName: 'MedPlus Vadapalani Branch' },
+    { id: 'TK-209302', patientName: 'Meena Iyer',      patientAge: 38, patientGender: 'Female', address: 'Flat 301, Taramani Link Rd, Velachery, Chennai',        scheduledTime: '08:20 AM', distanceKm: 3.2, paymentStatus: 'PAID', amount: 640,  assays: 'Vitamin D + B12',        referenceNumber: 'RAM0992', status: 'completed', completedAt: '08:42 AM', branchId: 'BR-VELACHERY', branchName: 'MedPlus Velachery Branch' },
+    { id: 'TK-209303', patientName: 'Arjun Nair',      patientAge: 29, patientGender: 'Male',   address: '55, 3rd Avenue, Anna Nagar, Chennai',                  scheduledTime: '09:00 AM', distanceKm: 1.8, paymentStatus: 'PAID', amount: 520,  assays: 'CBC',                    referenceNumber: 'RAM0993', status: 'completed', completedAt: '09:18 AM', branchId: 'BR-ANNANAGAR', branchName: 'MedPlus Anna Nagar Branch' }
   ];
 
   const gridEl = document.getElementById('patientCardsGrid');
@@ -407,18 +469,12 @@
   const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
   const money = n => '₹' + Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const statusOf = t => String(t.status || '').toLowerCase().trim();
-  const USE_SAMPLE_DATA = true;
 
   async function fetchTasks() {
-    if (USE_SAMPLE_DATA) {
-      appState.tasks = SAMPLE_TASKS;
-      renderTasks();
-      return;
-    }
     try {
       const res = await fetch('/api/tasks');
       const data = await res.json();
-      if (data.success && Array.isArray(data.tasks)) {
+      if (data.success && Array.isArray(data.tasks) && data.tasks.length > 0) {
         appState.tasks = data.tasks;
       } else {
         appState.tasks = SAMPLE_TASKS;
@@ -429,6 +485,7 @@
     }
     renderTasks();
   }
+
   function switchTab(tab) {
     appState.activeTab = tab;
     document.getElementById('tabBtnPending').classList.toggle('active', tab === 'pending');
@@ -440,21 +497,39 @@
     appState.query = value;
     renderTasks();
   }
+
+  function setSuperAdminBranch(branchId, btn) {
+    appState.selectedBranch = branchId;
+    document.querySelectorAll('.branch-filter-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    renderTasks();
+    showToast('Branch Filter', branchId === 'all' ? 'Showing all branches consolidated view' : `Showing ${btn.innerText.replace('📍', '').trim()} branch records`);
+  }
+
   function renderTasks() {
-    const pendingCount   = appState.tasks.filter(t => statusOf(t) === 'pending').length;
-    const completedCount = appState.tasks.filter(t => statusOf(t) === 'completed').length;
+    // 1. Filter by user branch restriction or Super Admin branch selection
+    const activeTasks = appState.tasks.filter(t => {
+      if (appState.selectedBranch && appState.selectedBranch !== 'all') {
+        const bId = t.branchId || t.branch_id || '';
+        return bId === appState.selectedBranch;
+      }
+      return true;
+    });
+
+    const pendingCount   = activeTasks.filter(t => statusOf(t) === 'pending').length;
+    const completedCount = activeTasks.filter(t => statusOf(t) === 'completed').length;
 
     document.getElementById('tabBtnPending').textContent   = `Pending (${pendingCount})`;
     document.getElementById('tabBtnCompleted').textContent = `Completed (${completedCount})`;
 
     const q = appState.query.toLowerCase().trim();
-    const list = appState.tasks.filter(t =>
+    const list = activeTasks.filter(t =>
       statusOf(t) === appState.activeTab &&
-      (!q || [t.patientName, t.address, t.referenceNumber, t.id].join(' ').toLowerCase().includes(q))
+      (!q || [t.patientName, t.address, t.referenceNumber, t.id, t.branchName].join(' ').toLowerCase().includes(q))
     );
 
     if (list.length === 0) {
-      gridEl.innerHTML = `<div class="empty-state">${q ? 'No patients match your search.' : `No ${appState.activeTab} collections found.`}</div>`;
+      gridEl.innerHTML = `<div class="empty-state">${q ? 'No patients match your search.' : `No ${appState.activeTab} collections found for this branch.`}</div>`;
       return;
     }
 
@@ -479,6 +554,8 @@
                    <a href="/patient-detail?id=${id}" class="btn-navigate-task">Navigate &amp; Collect ➔</a>`;
       }
 
+      const branchLabel = t.branchName || 'MedPlus Vadapalani Branch';
+
       return `
         <div class="patient-card-widescreen">
           <div class="patient-primary-details">
@@ -487,6 +564,8 @@
               <div class="patient-name-bold">${esc(t.patientName)} <small>(${esc(t.patientAge)} Yrs / ${esc(t.patientGender)})</small></div>
               <div class="patient-address-text">${esc(t.address)}</div>
               <div class="meta-tags-flex">
+                <span style="background:#EFF6FF; color:#1D4ED8; font-weight:700; font-size:11px; padding:2px 8px; border-radius:10px; border:1px solid #BFDBFE;">🏢 ${esc(branchLabel)}</span>
+                <span>•</span>
                 <span>🕒 ${esc(t.scheduledTime)}</span>
                 <span>•</span>
                 <span>📍 ${esc(t.distanceKm)} km away</span>
@@ -502,7 +581,7 @@
     }).join('');
   }
 
-  // Route Protection: Redirect unauthenticated visitors to login
+  // Route Protection & User Role Setup
   (function verifyAuth() {
     try {
       const stored = localStorage.getItem('medreach_user');
@@ -511,6 +590,27 @@
         return;
       }
       const u = JSON.parse(stored);
+      appState.currentUser = u;
+
+      // 1. Super Administrator Check
+      if (u.isSuperAdmin || u.role === 'Super Administrator' || u.branchId === 'ALL') {
+        const bar = document.getElementById('superAdminBranchBar');
+        if (bar) bar.style.display = 'flex';
+      }
+      // 2. Branch Owner Check
+      else if (u.role === 'Branch Owner' && u.branchId) {
+        appState.selectedBranch = u.branchId;
+        const banner = document.getElementById('branchOwnerBanner');
+        if (banner) {
+          banner.style.display = 'flex';
+          const t = document.getElementById('branchOwnerTitle');
+          const s = document.getElementById('branchOwnerSubtitle');
+          if (t) t.innerText = `${u.branchName || 'Regional Branch'} - Owner Portal`;
+          if (s) s.innerText = `Branch Director: ${u.name} • Restricted strictly to ${u.branchName || 'assigned'} specimen custody & operations`;
+        }
+      }
+
+      // 3. Auditor Read-Only Mode
       if (u.isReadOnly) {
         const banner = document.getElementById('auditorWarningBanner');
         if (banner) banner.style.display = 'flex';
@@ -702,6 +802,18 @@
       return;
     }
     document.getElementById('bookPatientModal').style.display = 'flex';
+    const brSelect = document.getElementById('newPatientBranch');
+    if (brSelect) {
+      if (u.role === 'Branch Owner' && u.branchId) {
+        brSelect.value = u.branchId;
+        brSelect.disabled = true;
+      } else {
+        brSelect.disabled = false;
+        if (appState.selectedBranch && appState.selectedBranch !== 'all') {
+          brSelect.value = appState.selectedBranch;
+        }
+      }
+    }
   }
 
   function closeBookModal() {
@@ -720,6 +832,10 @@
       if (stored) u = JSON.parse(stored);
     } catch(err) {}
 
+    const branchSelect = document.getElementById('newPatientBranch');
+    const branchId = branchSelect ? branchSelect.value : 'BR-VADAPALANI';
+    const branchName = branchSelect ? (branchSelect.options[branchSelect.selectedIndex].getAttribute('data-name') || branchSelect.options[branchSelect.selectedIndex].text) : 'MedPlus Vadapalani Branch';
+
     const payload = {
       patient_name: document.getElementById('newPatientName').value.trim(),
       patient_phone: document.getElementById('newPatientPhone').value.trim(),
@@ -731,6 +847,8 @@
       assays: document.getElementById('newPatientAssays').value,
       amount: parseFloat(document.getElementById('newPatientAmount').value) || 750,
       assigned_to: document.getElementById('newPatientAssignee').value,
+      branch_id: branchId,
+      branch_name: branchName,
       user_name: u.name,
       user_role: u.role,
       employee_id: u.employeeId
@@ -749,7 +867,7 @@
         appState.tasks.unshift(data.task);
         renderTasks();
         closeBookModal();
-        showToast('Pickup Scheduled!', `${payload.patient_name} added to ${payload.assigned_to}'s route.`);
+        showToast('Pickup Scheduled!', `${payload.patient_name} assigned to ${branchName}.`);
         fetchMiniAuditStream();
         // Update kpi pending count
         const kpiP = document.getElementById('kpiPending');
@@ -771,12 +889,14 @@
         amount: payload.amount,
         assays: payload.assays,
         referenceNumber: `RAM${Date.now() % 10000}`,
-        status: 'pending'
+        status: 'pending',
+        branchId: payload.branch_id,
+        branchName: payload.branch_name
       };
       appState.tasks.unshift(fakeTask);
       renderTasks();
       closeBookModal();
-      showToast('Scheduled (Local Sync)!', `${payload.patient_name} added to active route.`);
+      showToast('Scheduled (Local Sync)!', `${payload.patient_name} added to ${branchName}.`);
     } finally {
       btn.disabled = false;
       btn.innerText = 'Confirm Booking & Dispatch ➔';
@@ -852,8 +972,17 @@
         </div>
 
         <div class="form-group-item">
+          <label>Select MedPlus Diagnostic Branch *</label>
+          <select id="newPatientBranch" required style="border: 2px solid var(--primary); background: #F0FDFA; font-weight: 700;">
+            <option value="BR-VADAPALANI" data-name="MedPlus Vadapalani Branch">🏢 MedPlus - Vadapalani Branch (100 Feet Rd, Vadapalani)</option>
+            <option value="BR-VELACHERY" data-name="MedPlus Velachery Branch">🏢 MedPlus - Velachery Branch (Velachery Bypass Rd, Velachery)</option>
+            <option value="BR-ANNANAGAR" data-name="MedPlus Anna Nagar Branch">🏢 MedPlus - Anna Nagar Branch (2nd Avenue, Anna Nagar)</option>
+          </select>
+        </div>
+
+        <div class="form-group-item">
           <label>Doorstep Collection Address *</label>
-          <input type="text" id="newPatientAddress" required placeholder="Flat / House No, Street, Layout, Area, Bengaluru">
+          <input type="text" id="newPatientAddress" required placeholder="Flat / House No, Street, Layout, Area, Chennai">
         </div>
 
         <div class="form-grid-2">

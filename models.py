@@ -15,6 +15,9 @@ class User(Base):
     phone = Column(String(30), default="+91 98765 43210")
     avatar = Column(String(255), nullable=True)
     vehicle_number = Column(String(50), default="KA-05-MK-4421")
+    branch_id = Column(String(50), nullable=True) # e.g. "BR-VADAPALANI", "BR-VELACHERY", "BR-ANNANAGAR", or "ALL"
+    branch_name = Column(String(100), nullable=True)
+    is_super_admin = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class Task(Base):
@@ -42,6 +45,8 @@ class Task(Base):
     payment_method = Column(String(30), nullable=True)
     payment_txn_id = Column(String(100), nullable=True)
     payment_paid_at = Column(String(50), nullable=True)
+    branch_id = Column(String(50), default="BR-VADAPALANI", index=True)
+    branch_name = Column(String(100), default="MedPlus Vadapalani Branch")
     created_at = Column(DateTime, default=datetime.utcnow)
 
     test_groups = relationship("TaskTestGroup", back_populates="task", cascade="all, delete-orphan")
@@ -80,6 +85,20 @@ class CenterCollection(Base):
     temperature = Column(Float, default=-2.0)
     created_at = Column(DateTime, default=datetime.utcnow)
 
+class Branch(Base):
+    __tablename__ = "branches"
+
+    id = Column(String(50), primary_key=True, index=True) # e.g. "BR-VADAPALANI", "BR-VELACHERY", "BR-ANNANAGAR"
+    name = Column(String(150), nullable=False)
+    code = Column(String(50), nullable=False)
+    city = Column(String(50), default="Chennai")
+    address = Column(Text, nullable=False)
+    phone = Column(String(50), nullable=False)
+    owner_name = Column(String(100), nullable=False)
+    owner_email = Column(String(100), nullable=False)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
 class DiagnosticCenter(Base):
     __tablename__ = "diagnostic_centers"
 
@@ -98,10 +117,12 @@ class AuditLog(Base):
     user_name = Column(String(100), nullable=False)
     user_role = Column(String(50), nullable=False)
     employee_id = Column(String(50), nullable=True)
+    branch_name = Column(String(100), default="All Branches")
     action = Column(String(50), nullable=False) # e.g. "TASK_REJECTED", "BARCODE_LINKED", "COLLECTION_COMPLETED", "PAYMENT_RECORDED", "BATCH_HANDOVER", "USER_LOGIN"
     target_id = Column(String(50), nullable=True) # e.g. "TK-209312"
     target_name = Column(String(100), nullable=True) # e.g. "Priya Venkatesh"
     details = Column(Text, nullable=False)
     ip_address = Column(String(50), default="127.0.0.1")
     security_hash = Column(String(64), nullable=True)
+
 

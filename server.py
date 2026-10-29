@@ -8,6 +8,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import Optional, List
@@ -20,6 +21,70 @@ def generate_security_hash(user_name: str, action: str, target_id: str, details:
     return hashlib.sha256(content.encode()).hexdigest()[:16]
 
 AUTHORIZED_USERS = [
+    {
+        "id": "USR-SPRADM",
+        "name": "MedPlus Super Administrator",
+        "role": "Super Administrator",
+        "employeeId": "SPR-0001",
+        "email": "superadmin@medreach.com",
+        "phone": "+91 99000 00000",
+        "digitsPhone": "9900000000",
+        "passwords": ["medreach@2026", "superadmin@2026", "admin@2026"],
+        "vehicle": "HQ-DIRECTOR",
+        "branch_id": "ALL",
+        "branch_name": "All Branches (HQ)",
+        "isSuperAdmin": True,
+        "isReadOnly": False,
+        "canManageUsers": True
+    },
+    {
+        "id": "USR-OWNER1",
+        "name": "Dr. K. Ramanathan (Vadapalani Owner)",
+        "role": "Branch Owner",
+        "employeeId": "OWN-1001",
+        "email": "owner1@medreach.com",
+        "phone": "+91 99400 11001",
+        "digitsPhone": "9940011001",
+        "passwords": ["medreach@2026", "owner1@2026"],
+        "vehicle": "TN-09-VDP-1001",
+        "branch_id": "BR-VADAPALANI",
+        "branch_name": "MedPlus Vadapalani Branch",
+        "isSuperAdmin": False,
+        "isReadOnly": False,
+        "canManageUsers": True
+    },
+    {
+        "id": "USR-OWNER2",
+        "name": "Dr. S. Meenakshi (Velachery Owner)",
+        "role": "Branch Owner",
+        "employeeId": "OWN-2001",
+        "email": "owner2@medreach.com",
+        "phone": "+91 99400 11002",
+        "digitsPhone": "9940011002",
+        "passwords": ["medreach@2026", "owner2@2026"],
+        "vehicle": "TN-07-VLC-2001",
+        "branch_id": "BR-VELACHERY",
+        "branch_name": "MedPlus Velachery Branch",
+        "isSuperAdmin": False,
+        "isReadOnly": False,
+        "canManageUsers": True
+    },
+    {
+        "id": "USR-OWNER3",
+        "name": "Dr. V. Rajesh (Anna Nagar Owner)",
+        "role": "Branch Owner",
+        "employeeId": "OWN-3001",
+        "email": "owner3@medreach.com",
+        "phone": "+91 99400 11003",
+        "digitsPhone": "9940011003",
+        "passwords": ["medreach@2026", "owner3@2026"],
+        "vehicle": "TN-02-ANR-3001",
+        "branch_id": "BR-ANNANAGAR",
+        "branch_name": "MedPlus Anna Nagar Branch",
+        "isSuperAdmin": False,
+        "isReadOnly": False,
+        "canManageUsers": True
+    },
     {
         "id": "USR-ADM",
         "name": "System Administrator",
@@ -101,22 +166,89 @@ AUTHORIZED_USERS = [
     }
 ]
 
+def ensure_schema_migrations():
+    try:
+        with engine.connect() as conn:
+            dialect = engine.dialect.name
+            if dialect == "sqlite":
+                res_t = conn.execute(text("PRAGMA table_info(tasks)")).fetchall()
+                cols_t = [r[1] for r in res_t]
+                if "branch_id" not in cols_t:
+                    conn.execute(text("ALTER TABLE tasks ADD COLUMN branch_id VARCHAR(50) DEFAULT 'BR-VADAPALANI'"))
+                if "branch_name" not in cols_t:
+                    conn.execute(text("ALTER TABLE tasks ADD COLUMN branch_name VARCHAR(100) DEFAULT 'MedPlus Vadapalani Branch'"))
+                
+                res_u = conn.execute(text("PRAGMA table_info(users)")).fetchall()
+                cols_u = [r[1] for r in res_u]
+                if "branch_id" not in cols_u:
+                    conn.execute(text("ALTER TABLE users ADD COLUMN branch_id VARCHAR(50)"))
+                if "branch_name" not in cols_u:
+                    conn.execute(text("ALTER TABLE users ADD COLUMN branch_name VARCHAR(100)"))
+                if "is_super_admin" not in cols_u:
+                    conn.execute(text("ALTER TABLE users ADD COLUMN is_super_admin BOOLEAN DEFAULT 0"))
+
+                res_a = conn.execute(text("PRAGMA table_info(audit_logs)")).fetchall()
+                cols_a = [r[1] for r in res_a]
+                if "branch_name" not in cols_a:
+                    conn.execute(text("ALTER TABLE audit_logs ADD COLUMN branch_name VARCHAR(100) DEFAULT 'All Branches'"))
+                conn.commit()
+            elif dialect == "mysql":
+                for col_def, tbl in [
+                    ("branch_id VARCHAR(50) DEFAULT 'BR-VADAPALANI'", "tasks"),
+                    ("branch_name VARCHAR(100) DEFAULT 'MedPlus Vadapalani Branch'", "tasks"),
+                    ("branch_id VARCHAR(50)", "users"),
+                    ("branch_name VARCHAR(100)", "users"),
+                    ("is_super_admin BOOLEAN DEFAULT FALSE", "users"),
+                    ("branch_name VARCHAR(100) DEFAULT 'All Branches'", "audit_logs")
+                ]:
+                    col_name = col_def.split()[0]
+                    chk = conn.execute(text(f"SHOW COLUMNS FROM {tbl} LIKE '{col_name}'")).fetchone()
+                    if not chk:
+                        conn.execute(text(f"ALTER TABLE {tbl} ADD COLUMN {col_def}"))
+                conn.commit()
+    except Exception as e:
+        print(f"[SCHEMA MIGRATION NOTE] {e}")
+
 def seed_default_data():
     db = SessionLocal()
     try:
-        user_count = db.query(models.User).count()
-        if user_count == 0:
-            default_user = models.User(
-                id="USR-101",
-                username="ashok.field@medreach.com",
-                password_hash="password123",
-                name="Ashok Pandian",
-                role="Field Phlebotomist Lead",
-                employee_id="EMP-8842",
-                phone="+91 98765 43210",
-                vehicle_number="KA-05-MK-4421"
-            )
-            db.add(default_user)
+        # Seed the 3 MedPlus Branches (Vadapalani, Velachery, Anna Nagar)
+        branch_count = db.query(models.Branch).count()
+        if branch_count == 0:
+            branches = [
+                models.Branch(
+                    id="BR-VADAPALANI",
+                    name="MedPlus Vadapalani Branch",
+                    code="MEDPLUS-VDP",
+                    city="Chennai",
+                    address="100 Feet Road, Vadapalani, Chennai - 600026",
+                    phone="+91 44 2480 1101",
+                    owner_name="Dr. K. Ramanathan",
+                    owner_email="owner1@medreach.com"
+                ),
+                models.Branch(
+                    id="BR-VELACHERY",
+                    name="MedPlus Velachery Branch",
+                    code="MEDPLUS-VLC",
+                    city="Chennai",
+                    address="Velachery Bypass Road, Velachery, Chennai - 600042",
+                    phone="+91 44 2243 2202",
+                    owner_name="Dr. S. Meenakshi",
+                    owner_email="owner2@medreach.com"
+                ),
+                models.Branch(
+                    id="BR-ANNANAGAR",
+                    name="MedPlus Anna Nagar Branch",
+                    code="MEDPLUS-ANR",
+                    city="Chennai",
+                    address="2nd Avenue, Roundtana, Anna Nagar, Chennai - 600040",
+                    phone="+91 44 2621 3303",
+                    owner_name="Dr. V. Rajesh",
+                    owner_email="owner3@medreach.com"
+                )
+            ]
+            db.add_all(branches)
+            db.commit()
 
         center_count = db.query(models.DiagnosticCenter).count()
         if center_count == 0:
@@ -138,7 +270,7 @@ def seed_default_data():
                 patient_phone="+91 94432 11098",
                 patient_age=34,
                 patient_gender="Female",
-                address="Flat 4/B, Sunrise Apts, Koramangala 5th Block",
+                address="Flat 4/B, 100ft Road, Vadapalani, Chennai",
                 distance_km=1.2,
                 scheduled_date="Today",
                 scheduled_time="09:30 AM",
@@ -146,7 +278,9 @@ def seed_default_data():
                 payment_status="paid",
                 total_amount=1250.0,
                 container_temperature=-2.0,
-                reference_number="REF-PV-8812"
+                reference_number="REF-PV-8812",
+                branch_id="BR-VADAPALANI",
+                branch_name="MedPlus Vadapalani Branch"
             )
             g1 = models.TaskTestGroup(id="GRP-101", task_id="TSK-201", title="Complete Blood Count (CBC)", tube_type="EDTA (Purple Cap)")
             g1.tests = [
@@ -170,7 +304,7 @@ def seed_default_data():
                 patient_phone="+91 98841 77234",
                 patient_age=48,
                 patient_gender="Male",
-                address="Plot 102, Green Glen Layout, Bellandur",
+                address="Plot 102, Bypass Road, Velachery, Chennai",
                 distance_km=2.4,
                 scheduled_date="Today",
                 scheduled_time="10:15 AM",
@@ -178,7 +312,9 @@ def seed_default_data():
                 payment_status="pending",
                 total_amount=850.0,
                 container_temperature=-2.0,
-                reference_number="REF-RS-4401"
+                reference_number="REF-RS-4401",
+                branch_id="BR-VELACHERY",
+                branch_name="MedPlus Velachery Branch"
             )
             g3 = models.TaskTestGroup(id="GRP-103", task_id="TSK-202", title="Diabetic Health Panel", tube_type="Fluoride (Grey Cap)")
             g3.tests = [
@@ -194,7 +330,7 @@ def seed_default_data():
                 patient_phone="+91 97711 55092",
                 patient_age=52,
                 patient_gender="Female",
-                address="32, 14th Main, HSR Layout Sector 4",
+                address="32, 2nd Avenue, Roundtana, Anna Nagar, Chennai",
                 distance_km=3.1,
                 scheduled_date="Today",
                 scheduled_time="11:00 AM",
@@ -202,7 +338,9 @@ def seed_default_data():
                 payment_status="paid",
                 total_amount=1600.0,
                 container_temperature=-2.0,
-                reference_number="REF-AR-1920"
+                reference_number="REF-AR-1920",
+                branch_id="BR-ANNANAGAR",
+                branch_name="MedPlus Anna Nagar Branch"
             )
             g4 = models.TaskTestGroup(id="GRP-104", task_id="TSK-203", title="Thyroid Profile (Total T3, T4, TSH)", tube_type="Serum (Red Cap)")
             g4.tests = [
@@ -219,7 +357,7 @@ def seed_default_data():
                 patient_phone="+91 91234 56780",
                 patient_age=29,
                 patient_gender="Male",
-                address="77, 80ft Road, Indiranagar",
+                address="77, Arcot Road, Vadapalani, Chennai",
                 distance_km=0.8,
                 scheduled_date="Today",
                 scheduled_time="08:00 AM",
@@ -227,16 +365,36 @@ def seed_default_data():
                 payment_status="paid",
                 total_amount=950.0,
                 barcode="MED-393420194",
-                reference_number="REF-SK-1102"
+                reference_number="REF-SK-1102",
+                branch_id="BR-VADAPALANI",
+                branch_name="MedPlus Vadapalani Branch"
             )
 
             db.add_all([t1, t2, t3, t4])
 
+        # Ensure all existing tasks have a branch_id and branch_name
+        all_tasks = db.query(models.Task).all()
+        cycle_branches = [
+            ("BR-VADAPALANI", "MedPlus Vadapalani Branch"),
+            ("BR-VELACHERY", "MedPlus Velachery Branch"),
+            ("BR-ANNANAGAR", "MedPlus Anna Nagar Branch")
+        ]
+        task_updated = False
+        for idx, t in enumerate(all_tasks):
+            if not getattr(t, "branch_id", None) or getattr(t, "branch_id", "") == "":
+                b_id, b_name = cycle_branches[idx % len(cycle_branches)]
+                t.branch_id = b_id
+                t.branch_name = b_name
+                task_updated = True
+        if task_updated:
+            db.commit()
+
         # Seed Multiple Authorized Users
+        existing_ids = {u.id for u in db.query(models.User.id).all()}
         existing_usernames = {u.username for u in db.query(models.User.username).all()}
         users_to_add = []
         for u in AUTHORIZED_USERS:
-            if u["email"] not in existing_usernames:
+            if u["email"] not in existing_usernames and u["id"] not in existing_ids:
                 users_to_add.append(models.User(
                     id=u["id"],
                     username=u["email"],
@@ -245,7 +403,10 @@ def seed_default_data():
                     role=u["role"],
                     employee_id=u["employeeId"],
                     phone=u["phone"],
-                    vehicle_number=u.get("vehicle", "KA-05-MK-4421")
+                    vehicle_number=u.get("vehicle", "KA-05-MK-4421"),
+                    branch_id=u.get("branch_id"),
+                    branch_name=u.get("branch_name"),
+                    is_super_admin=u.get("isSuperAdmin", False)
                 ))
         if users_to_add:
             db.add_all(users_to_add)
@@ -353,6 +514,7 @@ def seed_default_data():
 async def lifespan(app: FastAPI):
     print("[INFO] Setting up MedReach Web database tables...")
     Base.metadata.create_all(bind=engine)
+    ensure_schema_migrations()
     seed_default_data()
     print("[OK] MedReach Web Server is ready!")
     yield
@@ -431,6 +593,8 @@ class TaskCreateRequest(BaseModel):
     user_name: Optional[str] = "Front-Desk Reception"
     user_role: Optional[str] = "Front-Desk Receptionist"
     employee_id: Optional[str] = "REC-2001"
+    branch_id: Optional[str] = "BR-VADAPALANI"
+    branch_name: Optional[str] = "MedPlus Vadapalani Branch"
 
 
 @app.api_route("/", methods=["GET", "HEAD"], response_class=HTMLResponse)
@@ -592,15 +756,21 @@ def api_login(req: LoginRequest, request: Request, db: Session = Depends(get_db)
             "employeeId": matched_user["employeeId"],
             "phone": matched_user["phone"],
             "isReadOnly": matched_user.get("isReadOnly", False),
-            "canManageUsers": matched_user.get("canManageUsers", False)
+            "canManageUsers": matched_user.get("canManageUsers", False),
+            "branchId": matched_user.get("branch_id", "ALL"),
+            "branchName": matched_user.get("branch_name", "All Branches (HQ)"),
+            "isSuperAdmin": matched_user.get("isSuperAdmin", False)
         }
     }
 
 @app.get("/api/dashboard/stats")
-def api_dashboard_stats(db: Session = Depends(get_db)):
-    pending_count = db.query(models.Task).filter(models.Task.status == "pending").count()
-    completed_count = db.query(models.Task).filter(models.Task.status == "completed").count()
-    total_collections = pending_count + completed_count + 18 # base count matching mobile mock
+def api_dashboard_stats(branch_id: Optional[str] = None, db: Session = Depends(get_db)):
+    query = db.query(models.Task)
+    if branch_id and branch_id != "all":
+        query = query.filter(models.Task.branch_id == branch_id)
+    pending_count = query.filter(models.Task.status == "pending").count()
+    completed_count = query.filter(models.Task.status == "completed").count()
+    total_collections = pending_count + completed_count + (18 if not branch_id or branch_id == "all" else 6)
     
     return {
         "success": True,
@@ -614,18 +784,41 @@ def api_dashboard_stats(db: Session = Depends(get_db)):
                 "other": 10
             },
             "statusCards": {
-                "collected": 18 + completed_count,
+                "collected": (18 if not branch_id or branch_id == "all" else 6) + completed_count,
                 "pending": max(0, pending_count),
                 "routeKms": 12.4
             }
         }
     }
 
+@app.get("/api/branches")
+def api_get_branches(db: Session = Depends(get_db)):
+    branches = db.query(models.Branch).all()
+    results = []
+    for b in branches:
+        task_count = db.query(models.Task).filter(models.Task.branch_id == b.id).count()
+        pending_count = db.query(models.Task).filter(models.Task.branch_id == b.id, models.Task.status == "pending").count()
+        results.append({
+            "id": b.id,
+            "name": b.name,
+            "code": b.code,
+            "city": b.city,
+            "address": b.address,
+            "phone": b.phone,
+            "ownerName": b.owner_name,
+            "ownerEmail": b.owner_email,
+            "totalTasks": task_count,
+            "pendingTasks": pending_count
+        })
+    return {"success": True, "count": len(results), "branches": results}
+
 @app.get("/api/tasks")
-def api_get_tasks(status: Optional[str] = None, search: Optional[str] = None, db: Session = Depends(get_db)):
+def api_get_tasks(status: Optional[str] = None, search: Optional[str] = None, branch_id: Optional[str] = None, db: Session = Depends(get_db)):
     query = db.query(models.Task)
     if status and status != "all":
         query = query.filter(models.Task.status == status)
+    if branch_id and branch_id != "all":
+        query = query.filter(models.Task.branch_id == branch_id)
     
     tasks = query.all()
     results = []
@@ -660,6 +853,8 @@ def api_get_tasks(status: Optional[str] = None, search: Optional[str] = None, db
             "totalAmount": t.total_amount,
             "barcode": t.barcode,
             "referenceNumber": t.reference_number,
+            "branchId": getattr(t, "branch_id", "BR-VADAPALANI") or "BR-VADAPALANI",
+            "branchName": getattr(t, "branch_name", "MedPlus Vadapalani Branch") or "MedPlus Vadapalani Branch",
             "testGroups": groups
         })
     return {"success": True, "count": len(results), "tasks": results}
@@ -667,6 +862,9 @@ def api_get_tasks(status: Optional[str] = None, search: Optional[str] = None, db
 @app.post("/api/tasks")
 def api_create_task(req: TaskCreateRequest, request: Request, db: Session = Depends(get_db)):
     task_id = f"TK-{int(datetime.utcnow().timestamp()) % 1000000}"
+    branch_id = req.branch_id or "BR-VADAPALANI"
+    branch_name = req.branch_name or "MedPlus Vadapalani Branch"
+
     new_task = models.Task(
         id=task_id,
         patient_id=f"PAT-{int(datetime.utcnow().timestamp()) % 10000}",
@@ -683,7 +881,9 @@ def api_create_task(req: TaskCreateRequest, request: Request, db: Session = Depe
         total_amount=req.amount,
         container_temperature=-2.0,
         reference_number=f"RAM{int(datetime.utcnow().timestamp()) % 10000}",
-        reassigned_to=req.assigned_to
+        reassigned_to=req.assigned_to,
+        branch_id=branch_id,
+        branch_name=branch_name
     )
     grp = models.TaskTestGroup(
         id=f"GRP-{task_id}",
@@ -698,7 +898,7 @@ def api_create_task(req: TaskCreateRequest, request: Request, db: Session = Depe
     now_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
     client_ip = request.client.host if request.client else "127.0.0.1"
     audit_id = f"AUD-{int(datetime.utcnow().timestamp() * 1000)}"
-    details = f"Booked home collection for {req.patient_name} ({req.patient_age}Y/{req.patient_gender}). Assays: {req.assays}. Assigned to: {req.assigned_to}."
+    details = f"Booked home collection for {req.patient_name} at {branch_name} ({req.patient_age}Y/{req.patient_gender}). Assays: {req.assays}. Assigned to: {req.assigned_to}."
     hash_sig = generate_security_hash(req.user_name or "Reception", "TASK_BOOKED", task_id, details, now_str)
 
     audit_entry = models.AuditLog(
@@ -708,6 +908,7 @@ def api_create_task(req: TaskCreateRequest, request: Request, db: Session = Depe
         user_name=req.user_name or "Front-Desk Reception",
         user_role=req.user_role or "Front-Desk Receptionist",
         employee_id=req.employee_id or "REC-2001",
+        branch_name=branch_name,
         action="TASK_BOOKED",
         target_id=task_id,
         target_name=req.patient_name,
@@ -733,7 +934,9 @@ def api_create_task(req: TaskCreateRequest, request: Request, db: Session = Depe
             "amount": new_task.total_amount,
             "assays": req.assays,
             "referenceNumber": new_task.reference_number,
-            "status": "pending"
+            "status": "pending",
+            "branchId": new_task.branch_id,
+            "branchName": new_task.branch_name
         }
     }
 
@@ -770,6 +973,8 @@ def api_get_task_detail(task_id: str, db: Session = Depends(get_db)):
             "totalAmount": t.total_amount,
             "barcode": t.barcode,
             "referenceNumber": t.reference_number,
+            "branchId": getattr(t, "branch_id", "BR-VADAPALANI") or "BR-VADAPALANI",
+            "branchName": getattr(t, "branch_name", "MedPlus Vadapalani Branch") or "MedPlus Vadapalani Branch",
             "testGroups": groups
         }
     }
@@ -903,6 +1108,7 @@ def api_get_audit_logs(
                 "targetId": l.target_id or "-",
                 "targetName": l.target_name or "-",
                 "details": l.details,
+                "branchName": getattr(l, "branch_name", "All Branches") or "All Branches",
                 "ipAddress": l.ip_address or "127.0.0.1",
                 "securityHash": l.security_hash or "7f8a32b0c1e8"
             }

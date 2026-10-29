@@ -266,6 +266,7 @@
           <tr>
             <th>Timestamp</th>
             <th>Authorized User</th>
+            <th>Branch</th>
             <th>Action Category</th>
             <th>Target Reference</th>
             <th>Details &amp; Reason</th>
@@ -274,7 +275,7 @@
         </thead>
         <tbody id="auditTableBody">
           <tr>
-            <td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 40px;">
+            <td colspan="7" style="text-align: center; color: var(--text-secondary); padding: 40px;">
               Loading security audit ledger...
             </td>
           </tr>
@@ -372,7 +373,7 @@
       });
 
       if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 40px;">No matching audit records found.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-secondary); padding: 40px;">No matching audit records found.</td></tr>`;
         return;
       }
 
@@ -392,6 +393,11 @@
                   <div class="user-role-sub">${l.employeeId} • ${l.userRole}</div>
                 </div>
               </div>
+            </td>
+            <td>
+              <span style="background: #EFF6FF; color: #1D4ED8; font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 10px; border: 1px solid #BFDBFE; white-space: nowrap;">
+                🏢 ${l.branchName || 'All Branches'}
+              </span>
             </td>
             <td>${getActionBadge(l.action)}</td>
             <td>
