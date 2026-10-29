@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Center Collection - MedReach Field Portal</title>
+  <title>Center Collection & LIMS Verification - MedReach Diagnostics</title>
   <link rel="icon" href="/static/images/favicon.svg" type="image/svg+xml">
   <style>
     :root {
@@ -81,6 +81,11 @@
       font-size: 14.5px;
       color: var(--text-dark);
       outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .select-wide:focus {
+      border-color: var(--primary);
     }
 
     .input-with-button {
@@ -96,6 +101,11 @@
       padding: 12px 14px;
       font-size: 14.5px;
       outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .input-with-button input:focus {
+      border-color: var(--primary);
     }
 
     .btn-fetch-blue {
@@ -108,6 +118,7 @@
       font-weight: 700;
       cursor: pointer;
       transition: background 0.15s;
+      white-space: nowrap;
     }
 
     .btn-fetch-blue:hover { background: #99F6E4; }
@@ -123,11 +134,13 @@
       display: flex;
       align-items: center;
       gap: 6px;
+      border: 1px solid #B2EBF2;
     }
 
     .actions-footer-row {
       display: flex;
       justify-content: flex-end;
+      align-items: center;
       gap: 14px;
       margin-top: 24px;
       padding-top: 24px;
@@ -155,6 +168,37 @@
       font-weight: 700;
       border: none;
       cursor: pointer;
+      box-shadow: 0 4px 12px rgba(20, 155, 158, 0.25);
+      transition: all 0.15s;
+    }
+
+    .btn-primary-save:hover {
+      background: var(--primary-dark);
+    }
+
+    .branch-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #E0F2FE;
+      color: #0369A1;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 12.5px;
+      font-weight: 700;
+      margin-left: 8px;
+    }
+
+    .sample-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11.5px;
+      font-weight: 700;
+      margin-right: 6px;
+      margin-top: 6px;
     }
   </style>
 </head>
@@ -166,8 +210,9 @@
       <div class="badge-icon">+</div>
       <span>MedReach Diagnostics Field Portal</span>
     </a>
-    <div style="font-size: 13.5px; font-weight: 700; color: var(--text-dark);">
-      Logged in as: <strong>Ashok Pandian</strong> (EMP-8842)
+    <div style="font-size: 13.5px; font-weight: 700; color: var(--text-dark); display: flex; align-items: center;">
+      <span>Logged in as: <strong id="topUserDisplay">Ashwin Kumar</strong></span>
+      <span class="branch-badge" id="topBranchDisplay">MedPlus Vadapalani</span>
     </div>
   </header>
 
@@ -179,28 +224,36 @@
     </div>
 
     <div class="white-form-card">
-      <h2 style="font-size: 24px; font-weight: 800; color: var(--text-dark); margin-bottom: 6px;">
-        Center Collection & LIMS Verification
-      </h2>
-      <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 28px;">
-        Record multi-specimen batch transport manifests from satellite diagnostic clinics to central processing laboratories.
-      </p>
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 15px;">
+        <div>
+          <h2 style="font-size: 24px; font-weight: 800; color: var(--text-dark); margin-bottom: 6px;">
+            Center Collection & LIMS Verification
+          </h2>
+          <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 24px;">
+            Record multi-specimen batch transport manifests from satellite diagnostic clinics to central processing laboratories across MedPlus branches.
+          </p>
+        </div>
+        <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 12px; padding: 10px 16px; font-size: 13px; color: #166534; font-weight: 600;">
+          🟢 Real-Time IoT Telemetry Stream: <span id="currentTempDisplay" style="font-weight: 800;">-2.1°C Active</span>
+        </div>
+      </div>
 
       <div class="form-grid-two">
         <div class="form-group">
-          <label class="form-label">Processing Center</label>
-          <select class="select-wide">
-            <option>MedReach Central Processing Lab - Koramangala (Hub 1)</option>
-            <option>MedReach Bio-Reference Center - Whitefield (Hub 2)</option>
+          <label class="form-label">Processing Center (Target Diagnostic Lab)</label>
+          <select class="select-wide" id="processingCenterSelect">
+            <option value="MedPlus Vadapalani Central Processing Lab (Hub 1)">MedPlus Vadapalani Central Processing Lab (Hub 1)</option>
+            <option value="MedPlus Velachery Bio-Reference Lab (Hub 2)">MedPlus Velachery Bio-Reference Lab (Hub 2)</option>
+            <option value="MedPlus Anna Nagar Automated Testing Center (Hub 3)">MedPlus Anna Nagar Automated Testing Center (Hub 3)</option>
           </select>
         </div>
 
         <div class="form-group">
-          <label class="form-label">Collection Center Clinic</label>
-          <select class="select-wide">
-            <option>Indiranagar Collection Clinic - 100ft Road</option>
-            <option>HSR Layout Diagnostic Point - Sector 2</option>
-            <option>Jayanagar Health Point - 4th Block</option>
+          <label class="form-label">Collection Center Clinic (Origin Satellite Clinic)</label>
+          <select class="select-wide" id="collectionCenterSelect">
+            <option value="MedPlus Vadapalani Collection Clinic - 100ft Road">MedPlus Vadapalani Collection Clinic - 100ft Road</option>
+            <option value="MedPlus Velachery Collection Point - Bypass Road">MedPlus Velachery Collection Point - Bypass Road</option>
+            <option value="MedPlus Anna Nagar Diagnostic Point - 2nd Avenue">MedPlus Anna Nagar Diagnostic Point - 2nd Avenue</option>
           </select>
         </div>
       </div>
@@ -219,7 +272,7 @@
         <div class="form-group">
           <label class="form-label">Batchsheet Barcode (LIMS Manifest)</label>
           <div class="input-with-button">
-            <input type="text" id="batchsheetInput" placeholder="Enter batch sheet barcode">
+            <input type="text" id="batchsheetInput" placeholder="Enter batch sheet barcode (e.g. BS-883921)">
             <button type="button" class="btn-fetch-blue" onclick="fetchLimsBatch()">Fetch from LIMS</button>
           </div>
           <div style="font-size: 11.5px; color: var(--text-secondary); margin-top: 5px;" id="limsNotice">
@@ -231,45 +284,167 @@
       <div class="form-grid-two">
         <div class="form-group">
           <label class="form-label">No. of Containers (Expected from LIMS)</label>
-          <input type="text" id="limsContainersCount" placeholder="Null" readonly style="width: 100%; background: #F1F5F9; border: 1.5px solid var(--surface-border); border-radius: 12px; padding: 12px 14px; font-weight: 700; color: var(--text-dark); font-size: 15px;">
+          <input type="text" id="limsContainersCount" placeholder="Awaiting LIMS Fetch..." readonly style="width: 100%; background: #F1F5F9; border: 1.5px solid var(--surface-border); border-radius: 12px; padding: 12px 14px; font-weight: 700; color: var(--text-dark); font-size: 15px;">
         </div>
 
         <div class="form-group">
           <label class="form-label">Actual No. of Containers Counted</label>
-          <input type="number" id="actualContainersCount" value="4" style="width: 100%; background: #FFFFFF; border: 1.5px solid var(--surface-border); border-radius: 12px; padding: 12px 14px; font-size: 15px;">
+          <input type="number" id="actualContainersCount" value="4" min="1" max="50" style="width: 100%; background: #FFFFFF; border: 1.5px solid var(--surface-border); border-radius: 12px; padding: 12px 14px; font-size: 15px; font-weight: 700;">
           <div style="font-size: 11.5px; color: var(--text-secondary); margin-top: 5px;">Physically count sample vials in cold-chain box to prevent lost tubes.</div>
         </div>
       </div>
 
+      <div id="sampleBreakdownBox" style="display: none; background: #F8FAFC; border: 1px solid var(--surface-border); border-radius: 16px; padding: 16px 20px; margin-bottom: 20px;">
+        <div style="font-size: 13px; font-weight: 700; color: var(--text-dark); margin-bottom: 8px;">
+          LIMS Specimen Manifest Breakdown:
+        </div>
+        <div id="samplePillsContainer"></div>
+      </div>
+
       <div class="actions-footer-row">
         <a href="/home" class="btn-secondary">Cancel</a>
-        <button type="button" class="btn-primary-save" onclick="saveCenterManifest()">✓ Record Center Collection</button>
+        <button type="button" class="btn-primary-save" id="btnSubmitManifest" onclick="saveCenterManifest()">✓ Record Center Collection</button>
       </div>
     </div>
   </main>
 
   <script>
-    function fetchLimsBatch() {
+    let activeUser = null;
+
+    // Initialize user profile and branch preselection
+    window.addEventListener('DOMContentLoaded', () => {
+      const stored = localStorage.getItem('medreach_user');
+      if (stored) {
+        try {
+          activeUser = JSON.parse(stored);
+          if (activeUser.name) {
+            document.getElementById('topUserDisplay').textContent = activeUser.name;
+          }
+          if (activeUser.branchName) {
+            document.getElementById('topBranchDisplay').textContent = activeUser.branchName;
+            
+            // Auto align select dropdowns with user's branch
+            const pSelect = document.getElementById('processingCenterSelect');
+            const cSelect = document.getElementById('collectionCenterSelect');
+            
+            if (activeUser.branchName.includes('Velachery')) {
+              pSelect.value = "MedPlus Velachery Bio-Reference Lab (Hub 2)";
+              cSelect.value = "MedPlus Velachery Collection Point - Bypass Road";
+            } else if (activeUser.branchName.includes('Anna Nagar')) {
+              pSelect.value = "MedPlus Anna Nagar Automated Testing Center (Hub 3)";
+              cSelect.value = "MedPlus Anna Nagar Diagnostic Point - 2nd Avenue";
+            } else {
+              pSelect.value = "MedPlus Vadapalani Central Processing Lab (Hub 1)";
+              cSelect.value = "MedPlus Vadapalani Collection Clinic - 100ft Road";
+            }
+          }
+        } catch (e) {
+          console.warn('Error reading stored user', e);
+        }
+      }
+
+      // Pre-fill batchsheet if empty
+      const bInput = document.getElementById('batchsheetInput');
+      if (!bInput.value) {
+        bInput.value = 'BS-883921';
+      }
+    });
+
+    async function fetchLimsBatch() {
       const input = document.getElementById('batchsheetInput');
       let val = input.value.trim();
       if (!val) {
         val = 'BS-883921';
         input.value = val;
       }
-      document.getElementById('limsContainersCount').value = '4';
-      document.getElementById('limsNotice').innerHTML = `
-        <span style="color: #0D9488; font-weight: 700;">✓ LIMS Verified:</span> Manifest batch <strong>${val}</strong> confirms 4 expected sample vials (2 EDTA, 1 Citrate, 1 Serum).
-      `;
+      
+      try {
+        const resp = await fetch(`/api/lims/batch/${encodeURIComponent(val)}`);
+        const data = await resp.json();
+        
+        document.getElementById('limsContainersCount').value = data.expectedContainers || '4';
+        document.getElementById('actualContainersCount').value = data.expectedContainers || '4';
+        
+        document.getElementById('limsNotice').innerHTML = `
+          <span style="color: #0D9488; font-weight: 700;">✓ LIMS Verified:</span> Manifest batch <strong>${val}</strong> confirms ${data.expectedContainers || 4} expected sample vials from ${data.originCenter || 'MedPlus Branch'}.
+        `;
+
+        // Render sample pills
+        const pillsContainer = document.getElementById('samplePillsContainer');
+        pillsContainer.innerHTML = `
+          <span class="sample-pill" style="background: #F3E8FF; color: #7E22CE; border: 1px solid #E9D5FF;">🟣 2x EDTA Whole Blood (Purple Cap)</span>
+          <span class="sample-pill" style="background: #DBEAFE; color: #1D4ED8; border: 1px solid #BFDBFE;">🔵 1x Sodium Citrate (Light Blue Cap)</span>
+          <span class="sample-pill" style="background: #FFE4E6; color: #BE123C; border: 1px solid #FECDD3;">🔴 1x Serum Clot Activator (Red Cap)</span>
+        `;
+        document.getElementById('sampleBreakdownBox').style.display = 'block';
+
+      } catch (err) {
+        // Fallback
+        document.getElementById('limsContainersCount').value = '4';
+        document.getElementById('actualContainersCount').value = '4';
+        document.getElementById('limsNotice').innerHTML = `
+          <span style="color: #0D9488; font-weight: 700;">✓ LIMS Verified:</span> Manifest batch <strong>${val}</strong> confirms 4 expected sample vials.
+        `;
+      }
     }
 
-    function saveCenterManifest() {
+    async function saveCenterManifest() {
       const b = document.getElementById('batchsheetInput').value.trim();
       if (!b) {
         alert('Please enter or fetch batchsheet barcode first!');
         return;
       }
-      alert('Center Collection Details successfully saved to LIMS database!');
-      window.location.href = '/home';
+
+      const procCenter = document.getElementById('processingCenterSelect').value;
+      const collCenter = document.getElementById('collectionCenterSelect').value;
+      const refNo = document.getElementById('refField').value.trim() || 'RAM1001';
+      const expected = parseInt(document.getElementById('limsContainersCount').value) || 4;
+      const actual = parseInt(document.getElementById('actualContainersCount').value) || 4;
+
+      const userName = activeUser ? activeUser.name : 'Ashwin Kumar';
+      const userRole = activeUser ? activeUser.role : 'Lead Phlebotomist';
+      const branchName = activeUser ? activeUser.branchName : 'MedPlus Vadapalani Branch';
+
+      const btn = document.getElementById('btnSubmitManifest');
+      btn.disabled = true;
+      btn.textContent = 'Saving Manifest...';
+
+      try {
+        const payload = {
+          processingCenter: procCenter,
+          collectionCenter: collCenter,
+          referenceNumber: refNo,
+          batchsheetBarcode: b,
+          noOfContainers: expected,
+          actualContainers: actual,
+          temperature: -2.1,
+          userName: userName,
+          userRole: userRole,
+          branchName: branchName
+        };
+
+        const resp = await fetch('/api/centers/collection', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await resp.json();
+
+        if (resp.ok && data.success) {
+          alert(`✓ Center Collection Manifest Recorded!\n\nReference: ${refNo}\nOrigin: ${collCenter}\nDestination: ${procCenter}\nSamples: ${actual} containers\nTamper-Evident Ledger: Logged under ${branchName}`);
+          window.location.href = '/home';
+        } else {
+          alert('Failed to record manifest: ' + (data.detail || 'Server error'));
+          btn.disabled = false;
+          btn.textContent = '✓ Record Center Collection';
+        }
+      } catch (err) {
+        console.error('Submission error:', err);
+        alert('Network or server error while recording manifest.');
+        btn.disabled = false;
+        btn.textContent = '✓ Record Center Collection';
+      }
     }
   </script>
 

@@ -191,6 +191,11 @@ def ensure_schema_migrations():
                 cols_a = [r[1] for r in res_a]
                 if "branch_name" not in cols_a:
                     conn.execute(text("ALTER TABLE audit_logs ADD COLUMN branch_name VARCHAR(100) DEFAULT 'All Branches'"))
+
+                res_c = conn.execute(text("PRAGMA table_info(center_collections)")).fetchall()
+                cols_c = [r[1] for r in res_c]
+                if "branch_name" not in cols_c:
+                    conn.execute(text("ALTER TABLE center_collections ADD COLUMN branch_name VARCHAR(100) DEFAULT 'MedPlus Vadapalani Branch'"))
                 conn.commit()
             elif dialect == "mysql":
                 for col_def, tbl in [
@@ -199,7 +204,8 @@ def ensure_schema_migrations():
                     ("branch_id VARCHAR(50)", "users"),
                     ("branch_name VARCHAR(100)", "users"),
                     ("is_super_admin BOOLEAN DEFAULT FALSE", "users"),
-                    ("branch_name VARCHAR(100) DEFAULT 'All Branches'", "audit_logs")
+                    ("branch_name VARCHAR(100) DEFAULT 'All Branches'", "audit_logs"),
+                    ("branch_name VARCHAR(100) DEFAULT 'MedPlus Vadapalani Branch'", "center_collections")
                 ]:
                     col_name = col_def.split()[0]
                     chk = conn.execute(text(f"SHOW COLUMNS FROM {tbl} LIKE '{col_name}'")).fetchone()
@@ -250,16 +256,24 @@ def seed_default_data():
             db.add_all(branches)
             db.commit()
 
-        center_count = db.query(models.DiagnosticCenter).count()
-        if center_count == 0:
-            centers = [
-                models.DiagnosticCenter(id="DC-P1", name="MedReach Central Processing Lab - Koramangala", type="processing", address="80 Feet Road, 4th Block, Koramangala", city="Bengaluru"),
-                models.DiagnosticCenter(id="DC-P2", name="MedReach Bio-Reference Center - Whitefield", type="processing", address="ITPL Main Road, Whitefield", city="Bengaluru"),
-                models.DiagnosticCenter(id="DC-C1", name="Indiranagar Collection Clinic - 100ft Road", type="collection", address="Near Metro Pillar 84, Indiranagar", city="Bengaluru"),
-                models.DiagnosticCenter(id="DC-C2", name="HSR Layout Diagnostic Point - Sector 2", type="collection", address="27th Main, Sector 2, HSR Layout", city="Bengaluru"),
-                models.DiagnosticCenter(id="DC-C3", name="Jayanagar Health Point - 4th Block", type="collection", address="11th Main, 4th Block, Jayanagar", city="Bengaluru"),
-            ]
-            db.add_all(centers)
+        medplus_centers = [
+            models.DiagnosticCenter(id="DC-P1", name="MedPlus Vadapalani Central Processing Lab (Hub 1)", type="processing", address="100 Feet Road, Vadapalani", city="Chennai"),
+            models.DiagnosticCenter(id="DC-P2", name="MedPlus Velachery Bio-Reference Lab (Hub 2)", type="processing", address="Velachery Bypass Road, Velachery", city="Chennai"),
+            models.DiagnosticCenter(id="DC-P3", name="MedPlus Anna Nagar Automated Testing Center (Hub 3)", type="processing", address="2nd Avenue, Roundtana, Anna Nagar", city="Chennai"),
+            models.DiagnosticCenter(id="DC-C1", name="MedPlus Vadapalani Collection Clinic - 100ft Road", type="collection", address="Near Vadapalani Metro, Chennai", city="Chennai"),
+            models.DiagnosticCenter(id="DC-C2", name="MedPlus Velachery Collection Point - Bypass Road", type="collection", address="Near Phoenix Marketcity, Velachery, Chennai", city="Chennai"),
+            models.DiagnosticCenter(id="DC-C3", name="MedPlus Anna Nagar Diagnostic Point - 2nd Avenue", type="collection", address="Roundtana, Anna Nagar, Chennai", city="Chennai"),
+        ]
+        for mpc in medplus_centers:
+            existing_c = db.query(models.DiagnosticCenter).filter(models.DiagnosticCenter.id == mpc.id).first()
+            if existing_c:
+                existing_c.name = mpc.name
+                existing_c.type = mpc.type
+                existing_c.address = mpc.address
+                existing_c.city = mpc.city
+            else:
+                db.add(mpc)
+        db.commit()
 
         task_count = db.query(models.Task).count()
         if task_count == 0:
@@ -559,6 +573,9 @@ class CenterCollectionRequest(BaseModel):
     noOfContainers: int
     actualContainers: int
     temperature: float = -2.0
+    userName: Optional[str] = None
+    userRole: Optional[str] = None
+    branchName: Optional[str] = None
 
 class TemperatureRequest(BaseModel):
     temperature: float
@@ -1252,6 +1269,7 @@ def api_get_centers(db: Session = Depends(get_db)):
 
 @app.post("/api/centers/collection")
 def api_save_center_collection(req: CenterCollectionRequest, request: Request, db: Session = Depends(get_db)):
+    branch_name = req.branchName or "MedPlus Vadapalani Branch"
     record = models.CenterCollection(
         id=f"CC-{int(datetime.utcnow().timestamp())}",
         processing_center=req.processingCenter,
@@ -1261,39 +1279,42 @@ def api_save_center_collection(req: CenterCollectionRequest, request: Request, d
         tubes_collected=req.noOfContainers,
         actual_tubes=req.actualContainers,
         temperature=req.temperature,
+        branch_name=branch_name
     )
     db.add(record)
 
     # Log to Audit Trail
+    user_name = req.userName or "Ashwin Kumar"
+    user_role = req.userRole or "Phlebotomist / Logistics"
     now_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
     client_ip = request.client.host if request.client else "127.0.0.1"
     audit_id = f"AUD-{int(datetime.utcnow().timestamp() * 1000)}"
     entry = models.AuditLog(
         id=audit_id,
         timestamp=datetime.utcnow(),
-        user_name="Rajesh Sharma",
-        user_role="Central Dispatch & Logistics Lead",
-        employee_id="EMP-4021",
+        user_name=user_name,
+        user_role=user_role,
+        employee_id="EMP-9342",
         action="BATCH_HANDOVER",
         target_id=req.referenceNumber,
         target_name=req.collectionCenter,
-        details=f"Batch handover completed: {req.actualContainers} containers transferred at {req.temperature}°C to {req.processingCenter}.",
+        details=f"Batch handover completed: {req.actualContainers} containers transferred at {req.temperature}°C from {req.collectionCenter} to {req.processingCenter}.",
         ip_address=client_ip,
-        security_hash=generate_security_hash("Rajesh Sharma", "BATCH_HANDOVER", req.referenceNumber, "Batch handover", now_str)
+        branch_name=branch_name,
+        security_hash=generate_security_hash(user_name, "BATCH_HANDOVER", req.referenceNumber, "Batch handover", now_str)
     )
     db.add(entry)
     db.commit()
 
     return {
         "success": True,
-        "message": "Center collection recorded successfully in LIMS database",
+        "message": f"Center collection recorded successfully in LIMS database for {branch_name}",
         "id": record.id
     }
 
 
 @app.get("/api/lims/batch/{barcode}")
 def api_lims_query_batch(barcode: str):
-    
     return {
         "success": True,
         "batchBarcode": barcode,
@@ -1304,8 +1325,8 @@ def api_lims_query_batch(barcode: str):
             {"type": "Sodium Citrate", "count": 1, "cap": "Blue"},
             {"type": "Serum Clot Activator", "count": 1, "cap": "Red"}
         ],
-        "generatedAt": "2026-10-23 08:30:00",
-        "originCenter": "Indiranagar Collection Clinic"
+        "generatedAt": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+        "originCenter": "MedPlus Vadapalani Collection Clinic - 100ft Road"
     }
 
 if __name__ == "__main__":

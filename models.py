@@ -83,6 +83,7 @@ class CenterCollection(Base):
     tubes_collected = Column(Integer, default=4)
     actual_tubes = Column(Integer, default=4)
     temperature = Column(Float, default=-2.0)
+    branch_name = Column(String(100), nullable=True, default="MedPlus Vadapalani Branch")
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class Branch(Base):
