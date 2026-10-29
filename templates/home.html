@@ -162,7 +162,7 @@
       </div>
     </a>
     <div class="nav-center-chips">
-      <div class="chip-indicator chip-temp"><span>❄️</span> Cold-Chain: -2.0°C (Optimal)</div>
+      <div class="chip-indicator chip-temp" id="topNavTempChip"><span>❄️</span> Cold-Chain: <span id="topNavTempText">-2.0°C</span> (Optimal)</div>
       <a href="/audit-logs" class="chip-indicator" style="background:#EEF2FF; color:#4338CA; border-color:#C7D2FE; text-decoration:none;" title="View Tamper-Evident Security Audit Trail">
         <span>🛡️</span> Audit Logs &amp; Activity
       </a>
@@ -327,7 +327,7 @@
         </div>
         <canvas id="fleetGpsCanvas" width="560" height="120" style="width:100%; height:120px; border-radius:12px; background:#0B192C;"></canvas>
         <div style="display:flex; justify-content:space-between; font-size:11.5px; color:var(--text-secondary);">
-          <span>Route: Koramangala Hub ➔ Sunrise Apts (Priya V.)</span>
+          <span id="hudRouteSubtitle">Route: MedPlus Vadapalani Hub ➔ 100ft Road (Priya V.)</span>
           <strong style="color:#10B981;">Live ETA: <span id="liveEtaText">6 mins</span> (0.8 km remaining)</strong>
         </div>
       </div>
@@ -337,19 +337,19 @@
       <div class="card-todays-collection">
         <div class="banner-header-flex">
           <span class="banner-title">TODAY'S COLLECTION</span>
-          <span class="banner-date-badge">Jul 01 - Jul 23</span>
+          <span class="banner-date-badge" id="bannerLiveDate">Active Shift</span>
         </div>
         <div class="banner-count-row">
-          <span class="big-count-number">24</span>
+          <span class="big-count-number" id="kpiTotalSpecimens">24</span>
           <span class="banner-count-label">Total Assigned Specimens</span>
         </div>
         <div class="tubes-strip-row">
-          <div class="tube-stat-badge"><div class="tube-stat-val">6</div><div class="tube-stat-name">EDTA</div></div>
-          <div class="tube-stat-badge"><div class="tube-stat-val">6</div><div class="tube-stat-name">Citrate</div></div>
-          <div class="tube-stat-badge"><div class="tube-stat-val">2</div><div class="tube-stat-name">Serum</div></div>
-          <div class="tube-stat-badge"><div class="tube-stat-val">4</div><div class="tube-stat-name">Fluoride</div></div>
-          <div class="tube-stat-badge"><div class="tube-stat-val">4</div><div class="tube-stat-name">Heparin</div></div>
-          <div class="tube-stat-badge"><div class="tube-stat-val">2</div><div class="tube-stat-name">Biopsy</div></div>
+          <div class="tube-stat-badge"><div class="tube-stat-val" id="tubeStatEdta">6</div><div class="tube-stat-name">EDTA</div></div>
+          <div class="tube-stat-badge"><div class="tube-stat-val" id="tubeStatCitrate">6</div><div class="tube-stat-name">Citrate</div></div>
+          <div class="tube-stat-badge"><div class="tube-stat-val" id="tubeStatSerum">2</div><div class="tube-stat-name">Serum</div></div>
+          <div class="tube-stat-badge"><div class="tube-stat-val" id="tubeStatFluoride">4</div><div class="tube-stat-name">Fluoride</div></div>
+          <div class="tube-stat-badge"><div class="tube-stat-val" id="tubeStatHeparin">4</div><div class="tube-stat-name">Heparin</div></div>
+          <div class="tube-stat-badge"><div class="tube-stat-val" id="tubeStatBiopsy">2</div><div class="tube-stat-name">Biopsy</div></div>
         </div>
       </div>
 
@@ -372,7 +372,7 @@
       <div class="kpi-card-white">
         <div>
           <div class="kpi-icon-box" style="background:#E0F2FE; color:#0284C7;">📍</div>
-          <div class="kpi-num-bold" style="color:#0284C7;">12.4</div>
+          <div class="kpi-num-bold" id="kpiDistance" style="color:#0284C7;">12.4</div>
         </div>
         <div class="kpi-label-text">Planned Route Kilometers</div>
       </div>
@@ -406,7 +406,7 @@
       <div class="sidebar-actions-column">
         <div class="quick-card-widget">
           <div class="widget-title-row"><span>🏷️</span> Center Collection &amp; LIMS</div>
-          <p class="widget-desc">Record batch sheet manifests from Indiranagar &amp; HSR clinics. Auto-verify expected container counts from LIMS software.</p>
+          <p class="widget-desc">Record batch sheet manifests from MedPlus satellite clinics to central processing labs with automated container verification.</p>
           <a href="/center-collection" class="btn-widget-action">+ Open Center Collection ➔</a>
         </div>
 
@@ -433,11 +433,11 @@
         </div>
 
         <div class="quick-card-widget" style="background:#F8FAFC;">
-          <div class="widget-title-row"><span>🏥</span> Koramangala Hub Drop-off</div>
-          <div style="font-size:13px; color:var(--text-secondary); line-height:1.6;">
+          <div class="widget-title-row"><span>🏥</span> <span id="hubDropoffTitle">MedPlus Hub Drop-off</span></div>
+          <div id="hubDropoffDetails" style="font-size:13px; color:var(--text-secondary); line-height:1.6;">
             <strong>Scheduled Drop-off:</strong> 12:45 PM<br>
-            <strong>Cooling Bag Temp:</strong> -2.0°C (Compliant)<br>
-            <strong>Vials to Deposit:</strong> 24 tubes
+            <strong>Cooling Bag Temp:</strong> <span id="widgetCoolingTemp">-2.0°C</span> (Compliant)<br>
+            <strong>Vials to Deposit:</strong> <span id="widgetVialsCount">12 tubes</span>
           </div>
         </div>
       </div>
@@ -521,6 +521,47 @@
 
     document.getElementById('tabBtnPending').textContent   = `Pending (${pendingCount})`;
     document.getElementById('tabBtnCompleted').textContent = `Completed (${completedCount})`;
+
+    // Dynamic Live KPI Synchronization
+    if (document.getElementById('kpiCollected')) document.getElementById('kpiCollected').innerText = completedCount;
+    if (document.getElementById('kpiPending')) document.getElementById('kpiPending').innerText = pendingCount;
+    if (document.getElementById('kpiTotalSpecimens')) document.getElementById('kpiTotalSpecimens').innerText = activeTasks.length;
+
+    const totalKm = activeTasks.filter(t => statusOf(t) === 'pending').reduce((sum, t) => sum + (Number(t.distanceKm) || 0), 0);
+    const distEl = document.getElementById('kpiDistance');
+    if (distEl) distEl.innerText = totalKm > 0 ? totalKm.toFixed(1) : '0.0';
+
+    // Dynamic Specimen Tube Classification
+    let edta = 0, citrate = 0, serum = 0, fluoride = 0, heparin = 0, biopsy = 0;
+    activeTasks.forEach(t => {
+      const a = (t.assays || '').toLowerCase();
+      if (a.includes('cbc') || a.includes('edta') || a.includes('hemoglobin')) edta += 2; else edta += 1;
+      if (a.includes('lipid') || a.includes('thyroid') || a.includes('serum')) serum += 1;
+      if (a.includes('diabetic') || a.includes('glucose') || a.includes('fasting')) fluoride += 1;
+      if (a.includes('citrate') || a.includes('coagulation')) citrate += 1;
+      if (a.includes('biopsy')) biopsy += 1;
+      if (a.includes('heparin')) heparin += 1;
+    });
+    if (document.getElementById('tubeStatEdta')) document.getElementById('tubeStatEdta').innerText = edta || 2;
+    if (document.getElementById('tubeStatCitrate')) document.getElementById('tubeStatCitrate').innerText = citrate || 1;
+    if (document.getElementById('tubeStatSerum')) document.getElementById('tubeStatSerum').innerText = serum || 1;
+    if (document.getElementById('tubeStatFluoride')) document.getElementById('tubeStatFluoride').innerText = fluoride || 1;
+    if (document.getElementById('tubeStatHeparin')) document.getElementById('tubeStatHeparin').innerText = heparin || 1;
+    if (document.getElementById('tubeStatBiopsy')) document.getElementById('tubeStatBiopsy').innerText = biopsy || 0;
+
+    // Hub Drop-off and Live Route Sync
+    const bName = (appState.selectedBranch === 'BR-VELACHERY' ? 'MedPlus Velachery Hub' : 
+                   appState.selectedBranch === 'BR-ANNANAGAR' ? 'MedPlus Anna Nagar Hub' : 
+                   'MedPlus Vadapalani Hub');
+    const hubTitle = document.getElementById('hubDropoffTitle');
+    if (hubTitle) hubTitle.innerText = `${bName} Drop-off`;
+    const vialsEl = document.getElementById('widgetVialsCount');
+    if (vialsEl) vialsEl.innerText = `${activeTasks.length * 2} tubes`;
+
+    const hudRoute = document.getElementById('hudRouteSubtitle');
+    if (hudRoute && activeTasks.length > 0) {
+      hudRoute.innerText = `Route: ${bName} ➔ ${activeTasks[0].address.split(',')[0]} (${activeTasks[0].patientName})`;
+    }
 
     const q = appState.query.toLowerCase().trim();
     const list = activeTasks.filter(t =>
@@ -731,20 +772,23 @@
     ctx.setLineDash([]);
 
     // Hub Stop (Origin)
+    const hubLabel = (appState.selectedBranch === 'BR-VELACHERY' ? 'HUB (Velachery)' : 
+                      appState.selectedBranch === 'BR-ANNANAGAR' ? 'HUB (Anna Nagar)' : 
+                      'HUB (Vadapalani)');
     ctx.fillStyle = '#10B981';
     ctx.beginPath();
     ctx.arc(40, h / 2, 7, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = '#FFFFFF';
     ctx.font = '10px -apple-system, sans-serif';
-    ctx.fillText('HUB (Koramangala)', 20, h / 2 - 14);
+    ctx.fillText(hubLabel, 20, h / 2 - 14);
 
     // Patient Stop (Destination)
     ctx.fillStyle = '#EF4444';
     ctx.beginPath();
     ctx.arc(w - 40, h / 2, 7, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillText('Priya V. (Sunrise Apts)', w - 130, h / 2 - 14);
+    ctx.fillText('Patient Stop (Chennai)', w - 130, h / 2 - 14);
 
     // Bike Location
     bikeProgress = (bikeProgress + 0.003) % 1.0;
@@ -907,9 +951,19 @@
     showToast('IoT Telemetry Ping', 'Sensors verified: Core -2.0°C | Peltier Active | 0 Excursions', 'info');
   }
 
-  // IoT Cold-chain telemetry fluctuation simulation
-  setInterval(() => {
-    const nextVal = parseFloat((-2.0 + (Math.random() * 0.2 - 0.1)).toFixed(1));
+  // Real-Time IoT Cold-chain telemetry stream
+  async function syncIoTTelemetry() {
+    let nextVal = parseFloat((-2.0 + (Math.random() * 0.2 - 0.1)).toFixed(1));
+    try {
+      const resp = await fetch('/api/telemetry/current');
+      if (resp.ok) {
+        const tdata = await resp.json();
+        if (tdata.success && typeof tdata.temperature === 'number') {
+          nextVal = tdata.temperature;
+        }
+      }
+    } catch(e) {}
+
     tempHistory.shift();
     tempHistory.push(nextVal);
     drawTelemetryChart();
@@ -919,7 +973,19 @@
     if (el1) el1.innerText = tempStr;
     const el2 = document.getElementById('chartLiveTempText');
     if (el2) el2.innerText = tempStr;
-  }, 2500);
+    const elNav = document.getElementById('topNavTempText');
+    if (elNav) elNav.innerText = tempStr;
+    const elCooling = document.getElementById('widgetCoolingTemp');
+    if (elCooling) elCooling.innerText = tempStr;
+  }
+
+  setInterval(syncIoTTelemetry, 3000);
+
+  // Background Auto-Sync (Real-Time updates without manual refresh)
+  setInterval(() => {
+    fetchTasks();
+    fetchMiniAuditStream();
+  }, 15000);
 
   document.addEventListener('DOMContentLoaded', () => {
     updateCurrentUser();

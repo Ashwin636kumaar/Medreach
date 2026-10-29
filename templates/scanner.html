@@ -220,8 +220,11 @@
 
     function confirmScannedBarcode() {
       if (!detectedBarcode) return;
+      const urlParams = new URLSearchParams(window.location.search);
+      const patientId = urlParams.get('id');
       if (target === 'patient') {
-        window.location.href = `/patient-detail?barcode=${detectedBarcode}`;
+        const idPart = patientId ? `id=${encodeURIComponent(patientId)}&` : '';
+        window.location.href = `/patient-detail?${idPart}barcode=${detectedBarcode}`;
       } else {
         window.location.href = `/center-collection?ref=${detectedBarcode}`;
       }

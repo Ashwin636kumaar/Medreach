@@ -106,7 +106,11 @@
           </div>
           <div class="info-row">
             <div class="info-ico">🏥</div>
-            <div><div class="info-label">Assigned Central Hub</div><div class="info-value">MedReach Central Reference Lab, Koramangala</div></div>
+            <div><div class="info-label">Assigned Central Hub &amp; Branch</div><div class="info-value" id="profileBranchHub">MedPlus Vadapalani Central Processing Lab (Hub 1)</div></div>
+          </div>
+          <div class="info-row" id="profileVehicleRow">
+            <div class="info-ico">🏍️</div>
+            <div><div class="info-label">Assigned Field Vehicle</div><div class="info-value" id="profileVehicle">TN-02-MK-4421</div></div>
           </div>
         </div>
         <button type="button" class="btn-logout" id="logoutBtn" onclick="handleLogout()">Log Out of System</button>
@@ -135,10 +139,22 @@
       if (u.phone) document.getElementById('profilePhone').innerText = u.phone || '+91 93426 00642';
       if (u.isReadOnly) {
         document.getElementById('profileAccessLevel').innerText = 'Read-Only Compliance Auditor (Restricted)';
-      } else if (u.canManageUsers) {
-        document.getElementById('profileAccessLevel').innerText = 'Super Administrator (Full System & Audit Access)';
+      } else if (u.canManageUsers || u.isSuperAdmin) {
+        document.getElementById('profileAccessLevel').innerText = 'Super Administrator (Full System & Multi-Branch Oversight)';
       } else {
         document.getElementById('profileAccessLevel').innerText = `${u.role} (Operational Access)`;
+      }
+
+      if (u.branchName) {
+        document.getElementById('profileBranchHub').innerText = u.branchName;
+      } else if (u.isSuperAdmin || u.branchId === 'ALL') {
+        document.getElementById('profileBranchHub').innerText = 'Master Oversight (All 3 MedPlus Branches: Vadapalani, Velachery, Anna Nagar)';
+      }
+
+      if (u.vehicle && u.vehicle !== 'N/A') {
+        document.getElementById('profileVehicle').innerText = u.vehicle;
+      } else {
+        document.getElementById('profileVehicleRow').style.display = 'none';
       }
 
       if (u.name) {

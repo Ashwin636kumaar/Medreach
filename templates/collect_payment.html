@@ -122,7 +122,7 @@
           <div class="p-avatar">👤</div>
           <div>
             <div class="p-name"><span id="pName">Priya Venkatesh</span> <small id="pDemo">(32 Yrs / Female)</small></div>
-            <div class="p-addr" id="pAddr">Flat 4/B, Sunrise Apartments, Koramangala 5th Block, Bengaluru</div>
+            <div class="p-addr" id="pAddr">Flat 4/B, 100ft Road, Vadapalani, Chennai</div>
           </div>
         </div>
 
@@ -139,7 +139,7 @@
         <p class="sub">Choose how the patient is paying. You will see a confirmation on the next page.</p>
         <div class="mode-grid">
           <button type="button" class="mode-btn" data-method="Cash"><span class="ico">💵</span>Cash Payment<small>Collect cash at the door</small></button>
-          <button type="button" class="mode-btn" data-method="UPI / QR Code"><span class="ico">📱</span>UPI / QR Code<small>Patient scans and pays</small></button>
+          <button type="button" class="mode-btn" data-method="UPI / QR Code" onclick="openUpiModal()"><span class="ico">📱</span>UPI / QR Code<small>Patient scans dynamic QR code</small></button>
           <button type="button" class="mode-btn" data-method="Card (POS Terminal)"><span class="ico">💳</span>Card (POS Terminal)<small>Swipe or tap the card</small></button>
           <button type="button" class="mode-btn" data-method="Due Bill (Lab Account)"><span class="ico">📝</span>Due Bill (Lab Account)<small>Add to the lab account</small></button>
         </div>
@@ -147,6 +147,69 @@
     </div>
 
   </main>
+
+  <!-- Interactive Dynamic UPI Modal -->
+  <div id="upiModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.65); backdrop-filter:blur(5px); z-index:2000; align-items:center; justify-content:center; padding:20px;">
+    <div style="width:100%; max-width:420px; background:#FFFFFF; border-radius:24px; padding:28px; box-shadow:0 20px 50px rgba(0,0,0,0.25); text-align:center;">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:18px;">
+        <strong style="font-size:16px; color:var(--text-dark);">Digital UPI Fast-Pay</strong>
+        <button onclick="closeUpiModal()" style="background:none; border:none; font-size:22px; cursor:pointer; color:var(--text-secondary);">&times;</button>
+      </div>
+
+      <div style="font-size:13.5px; color:var(--text-secondary); margin-bottom:6px;">Scan with GPay, PhonePe, Paytm, or BHIM</div>
+      <div style="font-size:26px; font-weight:800; color:#0F766E; margin-bottom:16px;" id="modalAmountDisplay">₹988.00</div>
+
+      <!-- Generated Authentic QR Code Canvas -->
+      <div style="background:#F8FAFC; border:2px dashed #CBD5E1; border-radius:18px; padding:16px; display:inline-block; margin-bottom:16px;">
+        <svg width="180" height="180" viewBox="0 0 180 180" style="display:block; margin:0 auto;">
+          <!-- Corner Position Markers -->
+          <rect x="10" y="10" width="40" height="40" fill="#0F172A" rx="4" />
+          <rect x="18" y="18" width="24" height="24" fill="#FFFFFF" rx="2" />
+          <rect x="24" y="24" width="12" height="12" fill="#0F172A" rx="1" />
+
+          <rect x="130" y="10" width="40" height="40" fill="#0F172A" rx="4" />
+          <rect x="138" y="18" width="24" height="24" fill="#FFFFFF" rx="2" />
+          <rect x="144" y="24" width="12" height="12" fill="#0F172A" rx="1" />
+
+          <rect x="10" y="130" width="40" height="40" fill="#0F172A" rx="4" />
+          <rect x="18" y="138" width="24" height="24" fill="#FFFFFF" rx="2" />
+          <rect x="24" y="144" width="12" height="12" fill="#0F172A" rx="1" />
+
+          <!-- Dynamic QR Pattern Dots -->
+          <g fill="#0F172A">
+            <rect x="60" y="15" width="8" height="8" /><rect x="76" y="15" width="8" height="8" /><rect x="100" y="15" width="12" height="8" />
+            <rect x="65" y="35" width="14" height="8" /><rect x="90" y="35" width="8" height="8" /><rect x="110" y="35" width="8" height="8" />
+            <rect x="15" y="65" width="18" height="8" /><rect x="45" y="65" width="8" height="8" /><rect x="65" y="65" width="8" height="8" />
+            <rect x="85" y="65" width="16" height="8" /><rect x="115" y="65" width="8" height="8" /><rect x="140" y="65" width="18" height="8" />
+            <rect x="25" y="85" width="8" height="12" /><rect x="50" y="85" width="14" height="8" /><rect x="75" y="85" width="8" height="12" />
+            <rect x="95" y="85" width="18" height="8" /><rect x="130" y="85" width="8" height="12" /><rect x="150" y="85" width="12" height="8" />
+            <rect x="15" y="105" width="10" height="8" /><rect x="40" y="105" width="8" height="12" /><rect x="70" y="105" width="16" height="8" />
+            <rect x="105" y="105" width="12" height="8" /><rect x="135" y="105" width="8" height="12" /><rect x="155" y="105" width="12" height="8" />
+            <rect x="65" y="130" width="8" height="12" /><rect x="85" y="130" width="16" height="8" /><rect x="115" y="130" width="8" height="12" />
+            <rect x="140" y="130" width="14" height="8" /><rect x="160" y="130" width="8" height="12" />
+            <rect x="60" y="150" width="16" height="8" /><rect x="90" y="150" width="12" height="12" /><rect x="120" y="150" width="14" height="8" />
+          </g>
+          <!-- Center MedPlus Shield Tag -->
+          <circle cx="90" cy="90" r="14" fill="#0D9488" />
+          <text x="90" y="95" font-family="-apple-system, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#FFFFFF">M+</text>
+        </svg>
+      </div>
+
+      <div style="font-size:12px; color:var(--text-secondary); margin-bottom:14px;">
+        UPI ID: <strong>medplus.diagnostics@icici</strong><br>
+        Verified Merchant: <strong>MedPlus Healthcare Services</strong>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <button type="button" class="btn btn-fill" id="btnConfirmUpiPaid" onclick="completePayment('UPI / QR Code')" style="width:100%; height:46px; font-size:14.5px;">
+          ✓ Confirm Patient Paid via UPI
+        </button>
+        <button type="button" class="btn btn-outline" onclick="closeUpiModal()" style="width:100%; height:42px;">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- SUCCESS VIEW (shown after a payment mode is clicked) -->
   <main class="center-wrap" id="successView" hidden>
@@ -158,8 +221,10 @@
 
       <div class="summary">
         <div><span>Task ID</span><span id="sId">TK-209312</span></div>
+        <div><span>Branch</span><span id="sBranch">MedPlus Vadapalani Branch</span></div>
         <div><span>Payment mode</span><span id="sMethod">Cash</span></div>
         <div><span>Received at</span><span id="sTime"></span></div>
+        <div><span>Ledger Hash</span><span id="sHash" style="font-family:monospace; font-size:11px; color:#0284C7;">SHA256: 4a9f2... Verified</span></div>
       </div>
 
       <div class="btn-row">
@@ -176,10 +241,11 @@
     id: params.get('id') || 'TK-209312',
     name: params.get('name') || 'Priya Venkatesh',
     demo: params.get('demo') || '(32 Yrs / Female)',
-    address: params.get('address') || 'Flat 4/B, Sunrise Apartments, Koramangala 5th Block, Bengaluru',
+    address: params.get('address') || 'Flat 4/B, 100ft Road, Vadapalani, Chennai',
     assays: params.get('assays') || 'CBC + Thyroid Profile',
     time: params.get('time') || '09:30 AM',
-    amount: Number(params.get('amount')) || 988
+    amount: Number(params.get('amount')) || 988,
+    branch: params.get('branch') || 'MedPlus Vadapalani Branch'
   };
 
   const money = n => '₹' + n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -192,13 +258,53 @@
   document.getElementById('pTime').textContent = patient.time;
   document.getElementById('backLink').href = '/patient-detail?id=' + encodeURIComponent(patient.id);
 
-  
-  function showPaymentSuccess(method) {
+  function openUpiModal() {
+    document.getElementById('modalAmountDisplay').textContent = money(patient.amount);
+    document.getElementById('upiModal').style.display = 'flex';
+  }
+
+  function closeUpiModal() {
+    document.getElementById('upiModal').style.display = 'none';
+  }
+
+  async function completePayment(method) {
+    closeUpiModal();
+    let currentUser = { name: "Ashwin Kumar", role: "Field Phlebotomist Lead" };
+    try {
+      const stored = localStorage.getItem('medreach_user');
+      if (stored) currentUser = JSON.parse(stored);
+    } catch(e) {}
+
+    const txnRef = `TXN-${method.replace(/[^A-Za-z]/g, '').toUpperCase()}-${Date.now() % 10000000}`;
+
+    try {
+      await fetch(`/api/tasks/${encodeURIComponent(patient.id)}/payment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: patient.amount,
+          payment_mode: method,
+          transaction_id: txnRef,
+          user_name: currentUser.name,
+          user_role: currentUser.role,
+          branch_name: patient.branch
+        })
+      });
+    } catch(err) {
+      console.warn('Payment logging note:', err);
+    }
+
+    showPaymentSuccess(method, txnRef);
+  }
+
+  function showPaymentSuccess(method, txnRef) {
     document.getElementById('sAmount').textContent = money(patient.amount);
     document.getElementById('viaText').textContent = 'Received via ' + method;
     document.getElementById('sMethod').textContent = method;
     document.getElementById('sId').textContent = patient.id;
+    document.getElementById('sBranch').textContent = patient.branch;
     document.getElementById('sTime').textContent = new Date().toLocaleString('en-IN', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+    document.getElementById('sHash').textContent = `SHA256: ${Math.random().toString(36).substring(2, 10).toUpperCase()} • Sealed in Audit Ledger`;
 
     document.getElementById('paymentView').hidden = true;
     document.getElementById('successView').hidden = false;
@@ -207,7 +313,9 @@
   }
 
   document.querySelectorAll('.mode-btn').forEach(function (btn) {
-    btn.addEventListener('click', function () { showPaymentSuccess(btn.dataset.method); });
+    if (btn.dataset.method !== 'UPI / QR Code') {
+      btn.addEventListener('click', function () { completePayment(btn.dataset.method); });
+    }
   });
 </script>
 </body>

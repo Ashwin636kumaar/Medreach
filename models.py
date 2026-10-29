@@ -107,7 +107,7 @@ class DiagnosticCenter(Base):
     name = Column(String(150), nullable=False)
     type = Column(String(30), nullable=False) 
     address = Column(Text, nullable=False)
-    city = Column(String(50), default="Bengaluru")
+    city = Column(String(50), default="Chennai")
 
 class AuditLog(Base):
     __tablename__ = "audit_logs"

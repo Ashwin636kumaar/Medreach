@@ -481,8 +481,8 @@ def seed_default_data():
                     employee_id="EMP-4021",
                     action="BATCH_HANDOVER",
                     target_id="RAM1001",
-                    target_name="Indiranagar Collection Clinic",
-                    details="Received Batch manifest RAM1001 from Indiranagar clinic. 4 tubes received at -1.9°C.",
+                    target_name="MedPlus Vadapalani Collection Clinic - 100ft Road",
+                    details="Received Batch manifest RAM1001 from MedPlus Vadapalani clinic. 4 tubes received at -1.9°C.",
                     ip_address="192.168.1.12",
                     security_hash=generate_security_hash("Rajesh Sharma", "BATCH_HANDOVER", "RAM1001", "Batch manifest RAM1001 received", now_str)
                 ),
@@ -549,6 +549,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    return response
+
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 static_dir = os.path.join(BASE_DIR, "static")
@@ -593,6 +602,14 @@ class TaskRejectRequest(BaseModel):
     reason: str
     notes: Optional[str] = None
     user_name: Optional[str] = "Ashwin Kumar"
+
+class PaymentRecordRequest(BaseModel):
+    amount: float
+    payment_mode: str
+    transaction_id: Optional[str] = None
+    user_name: Optional[str] = None
+    user_role: Optional[str] = None
+    branch_name: Optional[str] = None
     user_role: Optional[str] = "Field Phlebotomist Lead"
     employee_id: Optional[str] = "EMP-9342"
 
@@ -1154,6 +1171,50 @@ def api_complete_task(task_id: str, request: Request, db: Session = Depends(get_
 
     return {"success": True, "message": f"Task {task_id} completed successfully", "status": "completed"}
 
+@app.post("/api/tasks/{task_id}/payment")
+def api_record_task_payment(task_id: str, req: PaymentRecordRequest, request: Request, db: Session = Depends(get_db)):
+    t = db.query(models.Task).filter(models.Task.id == task_id).first()
+    branch_name = req.branch_name or "MedPlus Vadapalani Branch"
+    patient_name = "Patient"
+    if t:
+        t.payment_status = "paid"
+        t.status = "completed"
+        patient_name = t.patient_name
+        branch_name = getattr(t, "branch_name", None) or branch_name
+        db.commit()
+
+    user_name = req.user_name or "Ashwin Kumar"
+    user_role = req.user_role or "Lead Phlebotomist"
+    now_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+    client_ip = request.client.host if request.client else "127.0.0.1"
+    audit_id = f"AUD-{int(datetime.utcnow().timestamp() * 1000)}"
+    txn_ref = req.transaction_id or f"TXN-UPI-{int(datetime.utcnow().timestamp()) % 10000000}"
+
+    entry = models.AuditLog(
+        id=audit_id,
+        timestamp=datetime.utcnow(),
+        user_name=user_name,
+        user_role=user_role,
+        employee_id="EMP-9342",
+        action="PAYMENT_RECORDED",
+        target_id=task_id,
+        target_name=patient_name,
+        details=f"Payment verified: Rs. {req.amount:.2f} received via {req.payment_mode}. Ref: {txn_ref}.",
+        ip_address=client_ip,
+        branch_name=branch_name,
+        security_hash=generate_security_hash(user_name, "PAYMENT_RECORDED", task_id, f"Collected Rs. {req.amount} via {req.payment_mode}", now_str)
+    )
+    db.add(entry)
+    db.commit()
+
+    return {
+        "success": True,
+        "message": f"Payment of Rs. {req.amount:.2f} successfully recorded via {req.payment_mode}",
+        "transactionId": txn_ref,
+        "taskId": task_id,
+        "paymentStatus": "PAID"
+    }
+
 @app.post("/api/tasks/{task_id}/reject")
 def api_reject_task(task_id: str, req: TaskRejectRequest, request: Request, db: Session = Depends(get_db)):
     t = db.query(models.Task).filter(models.Task.id == task_id).first()
@@ -1327,6 +1388,52 @@ def api_lims_query_batch(barcode: str):
         ],
         "generatedAt": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
         "originCenter": "MedPlus Vadapalani Collection Clinic - 100ft Road"
+    }
+
+@app.get("/api/telemetry/current")
+def api_get_telemetry_current():
+    import random
+    temp_val = round(random.uniform(-2.3, -1.8), 1)
+    return {
+        "success": True,
+        "temperature": temp_val,
+        "unit": "°C",
+        "humidity": 48.5,
+        "batteryLevel": 94,
+        "peltierStatus": "ACTIVE",
+        "tamperSeal": "INTACT",
+        "compliance": "COMPLIANT_OPTIMAL",
+        "timestamp": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+        "boxId": "BX-NEO-94",
+        "assignedVehicle": "KA-05-MK-4421"
+    }
+
+@app.get("/api/analytics/summary")
+def api_get_analytics_summary(branch_id: Optional[str] = None, db: Session = Depends(get_db)):
+    query = db.query(models.Task)
+    if branch_id and branch_id != "all":
+        query = query.filter(models.Task.branch_id == branch_id)
+    all_tasks = query.all()
+
+    total_tasks = len(all_tasks)
+    completed_tasks = len([t for t in all_tasks if t.status == "completed"])
+    pending_tasks = len([t for t in all_tasks if t.status == "pending"])
+    paid_tasks = len([t for t in all_tasks if str(t.payment_status).lower() == "paid"])
+    revenue = sum(t.total_amount or 0.0 for t in all_tasks if str(t.payment_status).lower() == "paid")
+    distance = sum(t.distance_km or 0.0 for t in all_tasks if t.status == "pending")
+
+    return {
+        "success": True,
+        "branchId": branch_id or "all",
+        "totalTasks": total_tasks,
+        "completedTasks": completed_tasks,
+        "pendingTasks": pending_tasks,
+        "paidTasks": paid_tasks,
+        "totalRevenue": revenue,
+        "plannedKm": round(distance, 1),
+        "coldChainCompliancePct": 99.8,
+        "activePhlebotomists": 8,
+        "specimenTubesAssigned": total_tasks * 2
     }
 
 if __name__ == "__main__":

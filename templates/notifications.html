@@ -66,10 +66,10 @@
     <div class="nav-right">
       <a href="/notifications" class="bell"><span>🔔</span><i id="bellDot"></i></a>
       <a href="/profile" class="user">
-        <div class="avatar-sm">AP</div>
+        <div class="avatar-sm" id="navAvatar">AK</div>
         <div>
-          <div style="font-size:13px;font-weight:800;">Ashok Pandian</div>
-          <div style="font-size:11px;color:var(--text-secondary);">EMP-8842 • Field Lead</div>
+          <div style="font-size:13px;font-weight:800;" id="navUserName">Ashwin Kumar</div>
+          <div style="font-size:11px;color:var(--text-secondary);" id="navUserRole">EMP-9342 • Field Lead</div>
         </div>
       </a>
     </div>
@@ -90,8 +90,8 @@
       <!-- Left: live container temperature -->
       <aside class="temp-card">
         <div class="temp-top"><span>❄️</span> Container Temperature</div>
-        <div class="temp-val">-2.0°C</div>
-        <div class="temp-note">Cold-chain is optimal</div>
+        <div class="temp-val" id="liveNoteTemp">-2.0°C</div>
+        <div class="temp-note">Cold-chain is optimal • Peltier Active</div>
       </aside>
 
       <!-- Right: notification list -->
@@ -101,8 +101,10 @@
 
 <script>
   const notes = [
-    { id: 1, icon: '📋', title: 'New Collection Assigned!', text: 'Blood panel and lipid profile collection.', time: '12 minutes ago', tag: 'Home', unread: true },
-    { id: 2, icon: '❄️', title: 'Container Temperature',     text: 'Container temperature is maintained at -2.0°C.', time: '25 minutes ago', tag: '', unread: false, temp: true }
+    { id: 1, icon: '📋', title: 'New Collection Assigned!', text: 'Priya Venkatesh (100ft Road, Vadapalani) - CBC + Thyroid Profile.', time: '10 minutes ago', tag: 'Home Pickup', unread: true },
+    { id: 2, icon: '❄️', title: 'Real-Time Cold-Chain Telemetry', text: 'Peltier container cooling active at -2.0°C. 0 thermal excursions logged.', time: '20 minutes ago', tag: 'IoT Stream', unread: false, temp: true },
+    { id: 3, icon: '🏷️', title: 'MedPlus LIMS Batch Handover', text: 'Manifest RAM1001 verified (4 sample vials securely received at Central Processing Lab).', time: '1 hour ago', tag: 'LIMS Verified', unread: false },
+    { id: 4, icon: '🛡️', title: 'Security Audit Checkpoint', text: 'All field collections sealed with SHA-256 cryptographic signatures.', time: '2 hours ago', tag: 'Ledger Audit', unread: false }
   ];
 
   const listEl = document.getElementById('noteList');
@@ -132,7 +134,37 @@
 
   document.getElementById('markAll').addEventListener('click', () => { notes.forEach(n => n.unread = false); render(); });
 
-  render();
+  async function syncNotificationTemp() {
+    try {
+      const resp = await fetch('/api/telemetry/current');
+      if (resp.ok) {
+        const d = await resp.json();
+        if (d.success && typeof d.temperature === 'number') {
+          document.getElementById('liveNoteTemp').innerText = `${d.temperature}°C`;
+        }
+      }
+    } catch(e) {}
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    try {
+      const stored = localStorage.getItem('medreach_user');
+      if (stored) {
+        const u = JSON.parse(stored);
+        if (u.name) document.getElementById('navUserName').innerText = u.name;
+        if (u.role || u.employeeId) document.getElementById('navUserRole').innerText = `${u.employeeId || 'EMP-9342'} • ${u.role || 'Field Lead'}`;
+        if (u.name) {
+          const parts = u.name.split(' ');
+          const initials = parts.length > 1 ? (parts[0][0] + parts[1][0]).toUpperCase() : parts[0].substring(0, 2).toUpperCase();
+          document.getElementById('navAvatar').innerText = initials;
+        }
+      }
+    } catch(e) {}
+
+    render();
+    syncNotificationTemp();
+    setInterval(syncNotificationTemp, 3500);
+  });
 </script>
 </body>
 </html>
