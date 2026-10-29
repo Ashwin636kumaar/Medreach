@@ -252,17 +252,29 @@
       </div>
     </div>
 
-    <!-- Right Login Form Panel -->
+    <!-- Right Login / Sign Up Form Panel -->
     <div class="login-right-panel">
       <div class="login-form-container">
-        <div class="login-form-header">
-          <h2>Sign in to Field Suite</h2>
-          <p>Access your assigned pickups, collections, and sample logs.</p>
+        <!-- Auth Header with Switcher Tabs -->
+        <div class="login-form-header" style="margin-bottom: 20px;">
+          <h2 id="authHeaderTitle">Sign in to Field Suite</h2>
+          <p id="authHeaderSubtitle">Access your assigned pickups, collections, and sample logs.</p>
+        </div>
+
+        <!-- Mode Toggle Tabs (Sign In / Register) -->
+        <div style="display: flex; background: #E2E8F0; border-radius: 14px; padding: 4px; margin-bottom: 22px; gap: 4px;">
+          <button type="button" id="tabBtnSignIn" onclick="toggleAuthMode('login')" style="flex: 1; border: none; background: #FFFFFF; color: var(--text-dark); font-weight: 800; font-size: 13px; padding: 9px; border-radius: 10px; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.08); transition: all 0.2s;">
+            🔑 Sign In
+          </button>
+          <button type="button" id="tabBtnSignUp" onclick="toggleAuthMode('signup')" style="flex: 1; border: none; background: transparent; color: var(--text-secondary); font-weight: 700; font-size: 13px; padding: 9px; border-radius: 10px; cursor: pointer; transition: all 0.2s;">
+            ➕ New Field Executive Sign Up
+          </button>
         </div>
 
         <!-- Alert Notification Box -->
         <div id="loginAlert" style="display: none; padding: 12px 16px; border-radius: 12px; margin-bottom: 20px; font-size: 13.5px; font-weight: 500; line-height: 1.5; transition: all 0.2s;"></div>
 
+        <!-- 1. SIGN IN FORM -->
         <form id="loginForm" action="javascript:void(0);" onsubmit="handleWebLogin(event); return false;">
           <div class="form-group">
             <label>Mobile No / Email ID</label>
@@ -288,9 +300,80 @@
           <button type="button" onclick="handleWebLogin(event)" id="loginSubmitBtn" class="btn-submit-fullscreen">
             Sign In to Field Portal ➔
           </button>
+
+          <div style="margin-top: 22px; text-align: center; font-size: 13px; color: var(--text-secondary);">
+            New Field Executive?
+            <button type="button" onclick="toggleAuthMode('signup')" style="background: none; border: none; color: var(--primary); font-weight: 800; cursor: pointer; text-decoration: underline; margin-left: 4px;">
+              Create an Account ➔
+            </button>
+          </div>
         </form>
 
-        <div style="margin-top: 32px; font-size: 12px; color: var(--text-secondary); text-align: center; line-height: 1.6;">
+        <!-- 2. NEW FIELD EXECUTIVE SIGN UP FORM -->
+        <form id="signupForm" style="display: none;" action="javascript:void(0);" onsubmit="handleWebSignup(event); return false;">
+          <div class="form-group">
+            <label>Full Name *</label>
+            <div class="input-box">
+              <span style="color: var(--primary); font-size: 16px;">👤</span>
+              <input type="text" id="signupName" required placeholder="e.g. Praveen Kumar">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Mobile Number (For SMS &amp; OTP) *</label>
+            <div class="input-box">
+              <span style="color: var(--primary); font-size: 16px;">📞</span>
+              <input type="tel" id="signupPhone" required placeholder="e.g. +91 98401 23456">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Official Email ID *</label>
+            <div class="input-box">
+              <span style="color: var(--primary); font-size: 16px;">✉️</span>
+              <input type="email" id="signupEmail" required placeholder="e.g. praveen.field@medreach.com">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Assigned MedPlus Diagnostic Branch *</label>
+            <select id="signupBranch" style="width: 100%; border: 1.5px solid var(--surface-border); border-radius: 12px; padding: 12px 14px; font-size: 13.5px; outline: none; background: #FFFFFF; font-weight: 600;">
+              <option value="BR-VADAPALANI" data-name="MedPlus Vadapalani Branch">🏢 MedPlus - Vadapalani Branch (100 Feet Rd, Vadapalani)</option>
+              <option value="BR-VELACHERY" data-name="MedPlus Velachery Branch">🏢 MedPlus - Velachery Branch (Velachery Bypass Rd, Velachery)</option>
+              <option value="BR-ANNANAGAR" data-name="MedPlus Anna Nagar Branch">🏢 MedPlus - Anna Nagar Branch (2nd Avenue, Anna Nagar)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Vehicle / Two-Wheeler Number</label>
+            <div class="input-box">
+              <span style="color: var(--primary); font-size: 16px;">🏍️</span>
+              <input type="text" id="signupVehicle" placeholder="e.g. TN-09-CB-4491" value="TN-09-MK-4421">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Create Password *</label>
+            <div class="input-box">
+              <span style="color: var(--primary); font-size: 16px;">🔒</span>
+              <input type="password" id="signupPassword" required placeholder="Choose a password (e.g. medreach@2026)">
+              <span style="cursor: pointer; color: var(--text-secondary); user-select: none;" onclick="const p = document.getElementById('signupPassword'); p.type = p.type === 'password' ? 'text' : 'password'">👁️</span>
+            </div>
+          </div>
+
+          <button type="submit" id="signupSubmitBtn" class="btn-submit-fullscreen" style="margin-top: 10px;">
+            Create Account &amp; Access Route ➔
+          </button>
+
+          <div style="margin-top: 20px; text-align: center; font-size: 13px; color: var(--text-secondary);">
+            Already have an account?
+            <button type="button" onclick="toggleAuthMode('login')" style="background: none; border: none; color: var(--primary); font-weight: 800; cursor: pointer; text-decoration: underline; margin-left: 4px;">
+              Sign In to existing account ➔
+            </button>
+          </div>
+        </form>
+
+        <div style="margin-top: 28px; font-size: 12px; color: var(--text-secondary); text-align: center; line-height: 1.6;">
           Enterprise diagnostics personnel authentication. Connected to <code>medreach_db</code>.
         </div>
       </div>
@@ -298,6 +381,41 @@
   </div>
 
   <script>
+    function toggleAuthMode(mode) {
+      const loginForm = document.getElementById('loginForm');
+      const signupForm = document.getElementById('signupForm');
+      const titleEl = document.getElementById('authHeaderTitle');
+      const subtitleEl = document.getElementById('authHeaderSubtitle');
+      const tabSignIn = document.getElementById('tabBtnSignIn');
+      const tabSignUp = document.getElementById('tabBtnSignUp');
+      const alertBox = document.getElementById('loginAlert');
+      alertBox.style.display = 'none';
+
+      if (mode === 'signup') {
+        loginForm.style.display = 'none';
+        signupForm.style.display = 'block';
+        titleEl.innerText = 'Register Field Executive';
+        subtitleEl.innerText = 'Create your phlebotomist field account and link to your diagnostic branch.';
+        tabSignIn.style.background = 'transparent';
+        tabSignIn.style.color = 'var(--text-secondary)';
+        tabSignIn.style.boxShadow = 'none';
+        tabSignUp.style.background = '#FFFFFF';
+        tabSignUp.style.color = 'var(--text-dark)';
+        tabSignUp.style.boxShadow = '0 1px 4px rgba(0,0,0,0.08)';
+      } else {
+        signupForm.style.display = 'none';
+        loginForm.style.display = 'block';
+        titleEl.innerText = 'Sign in to Field Suite';
+        subtitleEl.innerText = 'Access your assigned pickups, collections, and sample logs.';
+        tabSignUp.style.background = 'transparent';
+        tabSignUp.style.color = 'var(--text-secondary)';
+        tabSignUp.style.boxShadow = 'none';
+        tabSignIn.style.background = '#FFFFFF';
+        tabSignIn.style.color = 'var(--text-dark)';
+        tabSignIn.style.boxShadow = '0 1px 4px rgba(0,0,0,0.08)';
+      }
+    }
+
     async function handleWebLogin(e) {
       if (e && e.preventDefault) e.preventDefault();
 
@@ -320,17 +438,6 @@
       userError.style.display = 'none';
       passError.style.display = 'none';
 
-      // 1. Check for empty fields
-      if (!rawUser && !rawPass) {
-        usernameBox.style.borderColor = '#EF4444';
-        passwordBox.style.borderColor = '#EF4444';
-        userError.innerText = 'Please enter your mobile number or email ID';
-        userError.style.display = 'block';
-        passError.innerText = 'Please enter your password';
-        passError.style.display = 'block';
-        return false;
-      }
-
       if (!rawUser) {
         userError.innerText = 'Please enter your mobile number or email ID';
         userError.style.display = 'block';
@@ -347,133 +454,6 @@
         return false;
       }
 
-      // 2. Multi-Role User Registry Check
-      const cleanUser = rawUser.toLowerCase();
-      const digitsOnly = cleanUser.replace(/\D/g, '');
-
-      const systemAccounts = [
-        {
-          id: 'USR-ADM',
-          name: 'System Administrator',
-          role: 'System Administrator',
-          employeeId: 'ADM-1001',
-          emails: ['admin@medreach.com'],
-          phones: ['9800000001'],
-          passwords: ['medreach@2026', 'admin@2026', 'ash@123'],
-          isReadOnly: false,
-          canManageUsers: true
-        },
-        {
-          id: 'USR-REC',
-          name: 'Front-Desk Reception',
-          role: 'Front-Desk Receptionist',
-          employeeId: 'REC-2001',
-          emails: ['reception@medreach.com'],
-          phones: ['9800000002'],
-          passwords: ['medreach@2026', 'reception@2026'],
-          isReadOnly: false,
-          canManageUsers: false
-        },
-        {
-          id: 'USR-SUP',
-          name: 'Nursing Supervisor',
-          role: 'Nursing Supervisor',
-          employeeId: 'NUR-3001',
-          emails: ['supervisor@medreach.com'],
-          phones: ['9800000003'],
-          passwords: ['medreach@2026', 'supervisor@2026'],
-          isReadOnly: false,
-          canManageUsers: false
-        },
-        {
-          id: 'USR-AUD',
-          name: 'Compliance Auditor',
-          role: 'Compliance Auditor',
-          employeeId: 'AUD-4001',
-          emails: ['auditor@medreach.com'],
-          phones: ['9800000004'],
-          passwords: ['medreach@2026', 'auditor@2026'],
-          isReadOnly: true,
-          canManageUsers: false
-        },
-        {
-          id: 'USR-101',
-          name: 'Ashwin Kumar',
-          role: 'Field Phlebotomist Lead',
-          employeeId: 'EMP-9342',
-          emails: ['ashwinkumaar65@gmail.com', 'ashwinkumar65@gmail.com'],
-          phones: ['9342600642'],
-          passwords: ['ash@123', 'Ash@123', 'Ashwin@2005', 'medreach@2026'],
-          isReadOnly: false,
-          canManageUsers: false
-        },
-        {
-          id: 'USR-105',
-          name: 'Ashok Pandian',
-          role: 'Senior Field Executive',
-          employeeId: 'EMP-8842',
-          emails: ['ashok.field@medreach.com'],
-          phones: ['9444155667'],
-          passwords: ['ashok@123', 'Ashok@123', 'password123', 'medreach@2026'],
-          isReadOnly: false,
-          canManageUsers: false
-        }
-      ];
-
-      let matchedAccount = null;
-      for (const acc of systemAccounts) {
-        if (acc.emails.includes(cleanUser) || (digitsOnly && acc.phones.includes(digitsOnly))) {
-          matchedAccount = acc;
-          break;
-        }
-      }
-
-      // Check if password matches any allowed password in the entire system
-      const allSystemPasswords = new Set(systemAccounts.flatMap(a => a.passwords));
-      const passwordMatchesAny = allSystemPasswords.has(rawPass);
-
-      if (!matchedAccount && !passwordMatchesAny) {
-        usernameBox.style.borderColor = '#EF4444';
-        passwordBox.style.borderColor = '#EF4444';
-        userError.innerText = 'Wrong user ID';
-        userError.style.display = 'block';
-        passError.innerText = 'Wrong password';
-        passError.style.display = 'block';
-        alertBox.style.background = '#FEE2E2';
-        alertBox.style.color = '#B91C1C';
-        alertBox.style.border = '1px solid #FCA5A5';
-        alertBox.innerHTML = '<strong>Login Failed:</strong> Invalid email/mobile number or password.';
-        alertBox.style.display = 'block';
-        return false;
-      }
-
-      if (!matchedAccount) {
-        usernameBox.style.borderColor = '#EF4444';
-        userError.innerText = 'Wrong user ID';
-        userError.style.display = 'block';
-        alertBox.style.background = '#FEE2E2';
-        alertBox.style.color = '#B91C1C';
-        alertBox.style.border = '1px solid #FCA5A5';
-        alertBox.innerHTML = '<strong>Login Failed:</strong> Wrong email or mobile number.';
-        alertBox.style.display = 'block';
-        usernameInput.focus();
-        return false;
-      }
-
-      if (!matchedAccount.passwords.includes(rawPass)) {
-        passwordBox.style.borderColor = '#EF4444';
-        passError.innerText = 'Wrong password';
-        passError.style.display = 'block';
-        alertBox.style.background = '#FEE2E2';
-        alertBox.style.color = '#B91C1C';
-        alertBox.style.border = '1px solid #FCA5A5';
-        alertBox.innerHTML = '<strong>Login Failed:</strong> Wrong password.';
-        alertBox.style.display = 'block';
-        passwordInput.focus();
-        return false;
-      }
-
-      // 3. Credentials are VALID -> Submit to server
       submitBtn.disabled = true;
       submitBtn.style.opacity = '0.7';
       submitBtn.innerText = 'Verifying credentials...';
@@ -487,23 +467,14 @@
 
         const result = await response.json();
 
-        if (response.ok && result.success) {
+        if (response.ok && result.success && result.user) {
           alertBox.style.background = '#DCFCE7';
           alertBox.style.color = '#15803D';
           alertBox.style.border = '1px solid #86EFAC';
-          const roleDisplay = result.user ? result.user.role : matchedAccount.role;
-          alertBox.innerHTML = `<strong>Success!</strong> Authenticated as <strong>${roleDisplay}</strong>. Redirecting...`;
+          alertBox.innerHTML = `<strong>Success!</strong> Authenticated as <strong>${result.user.name}</strong> (${result.user.role}). Redirecting...`;
           alertBox.style.display = 'block';
 
-          localStorage.setItem('medreach_user', JSON.stringify(result.user || {
-            id: matchedAccount.id,
-            name: matchedAccount.name,
-            role: matchedAccount.role,
-            email: matchedAccount.emails[0],
-            employeeId: matchedAccount.employeeId,
-            isReadOnly: matchedAccount.isReadOnly,
-            canManageUsers: matchedAccount.canManageUsers
-          }));
+          localStorage.setItem('medreach_user', JSON.stringify(result.user));
 
           setTimeout(() => {
             window.location.href = '/home';
@@ -517,33 +488,113 @@
           alertBox.innerHTML = `<strong>Login Failed:</strong> ${errMsg}`;
           alertBox.style.display = 'block';
 
+          if (errMsg.toLowerCase().includes('password')) {
+            passwordBox.style.borderColor = '#EF4444';
+            passError.innerText = errMsg;
+            passError.style.display = 'block';
+            passwordInput.focus();
+          } else {
+            usernameBox.style.borderColor = '#EF4444';
+            userError.innerText = errMsg;
+            userError.style.display = 'block';
+            usernameInput.focus();
+          }
+
           submitBtn.disabled = false;
           submitBtn.style.opacity = '1';
           submitBtn.innerText = 'Sign In to Field Portal ➔';
           return false;
         }
       } catch (err) {
-        console.warn('Network issue, local verification active:', err);
-        alertBox.style.background = '#DCFCE7';
-        alertBox.style.color = '#15803D';
-        alertBox.style.border = '1px solid #86EFAC';
-        alertBox.innerHTML = `<strong>Success!</strong> Verified as ${matchedAccount.role}. Redirecting...`;
+        console.error('Login error:', err);
+        alertBox.style.background = '#FEE2E2';
+        alertBox.style.color = '#B91C1C';
+        alertBox.style.border = '1px solid #FCA5A5';
+        alertBox.innerHTML = '<strong>Connection Error:</strong> Could not reach backend server. Please verify connection.';
         alertBox.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.style.opacity = '1';
+        submitBtn.innerText = 'Sign In to Field Portal ➔';
+        return false;
+      }
+    }
 
-        localStorage.setItem('medreach_user', JSON.stringify({
-          id: matchedAccount.id,
-          name: matchedAccount.name,
-          role: matchedAccount.role,
-          email: matchedAccount.emails[0],
-          employeeId: matchedAccount.employeeId,
-          isReadOnly: matchedAccount.isReadOnly,
-          canManageUsers: matchedAccount.canManageUsers
-        }));
+    async function handleWebSignup(e) {
+      if (e && e.preventDefault) e.preventDefault();
 
-        setTimeout(() => {
-          window.location.href = '/home';
-        }, 350);
-        return true;
+      const btn = document.getElementById('signupSubmitBtn');
+      const alertBox = document.getElementById('loginAlert');
+      const name = document.getElementById('signupName').value.trim();
+      const phone = document.getElementById('signupPhone').value.trim();
+      const email = document.getElementById('signupEmail').value.trim();
+      const password = document.getElementById('signupPassword').value.trim();
+      const branchSelect = document.getElementById('signupBranch');
+      const branchId = branchSelect.value;
+      const branchName = branchSelect.options[branchSelect.selectedIndex].getAttribute('data-name') || branchSelect.options[branchSelect.selectedIndex].text;
+      const vehicle = document.getElementById('signupVehicle').value.trim() || 'TN-09-MK-4421';
+
+      if (!name || !phone || !email || !password) {
+        alertBox.style.background = '#FEE2E2';
+        alertBox.style.color = '#B91C1C';
+        alertBox.style.border = '1px solid #FCA5A5';
+        alertBox.innerHTML = '<strong>Validation Error:</strong> Please fill in all required fields.';
+        alertBox.style.display = 'block';
+        return false;
+      }
+
+      btn.disabled = true;
+      btn.innerText = 'Registering Field Account...';
+
+      try {
+        const response = await fetch('/api/auth/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: name,
+            phone: phone,
+            email: email,
+            password: password,
+            branch_id: branchId,
+            branch_name: branchName,
+            vehicle_number: vehicle
+          })
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success && result.user) {
+          alertBox.style.background = '#DCFCE7';
+          alertBox.style.color = '#15803D';
+          alertBox.style.border = '1px solid #86EFAC';
+          alertBox.innerHTML = `<strong>Account Created!</strong> Welcome, ${result.user.name}. Assigned to ${result.user.branchName}. Redirecting...`;
+          alertBox.style.display = 'block';
+
+          localStorage.setItem('medreach_user', JSON.stringify(result.user));
+
+          setTimeout(() => {
+            window.location.href = '/home';
+          }, 400);
+          return true;
+        } else {
+          alertBox.style.background = '#FEE2E2';
+          alertBox.style.color = '#B91C1C';
+          alertBox.style.border = '1px solid #FCA5A5';
+          alertBox.innerHTML = `<strong>Registration Failed:</strong> ${result.detail || 'Could not complete registration.'}`;
+          alertBox.style.display = 'block';
+          btn.disabled = false;
+          btn.innerText = 'Create Account & Access Route ➔';
+          return false;
+        }
+      } catch (err) {
+        console.error('Signup error:', err);
+        alertBox.style.background = '#FEE2E2';
+        alertBox.style.color = '#B91C1C';
+        alertBox.style.border = '1px solid #FCA5A5';
+        alertBox.innerHTML = '<strong>Error:</strong> Network connectivity issue. Please try again.';
+        alertBox.style.display = 'block';
+        btn.disabled = false;
+        btn.innerText = 'Create Account & Access Route ➔';
+        return false;
       }
     }
   </script>

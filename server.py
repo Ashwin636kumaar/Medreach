@@ -596,6 +596,16 @@ class TaskCreateRequest(BaseModel):
     branch_id: Optional[str] = "BR-VADAPALANI"
     branch_name: Optional[str] = "MedPlus Vadapalani Branch"
 
+class SignupRequest(BaseModel):
+    name: str
+    phone: str
+    email: str
+    password: str
+    branch_id: Optional[str] = "BR-VADAPALANI"
+    branch_name: Optional[str] = "MedPlus Vadapalani Branch"
+    vehicle_number: Optional[str] = "TN-09-MK-1234"
+    employee_id: Optional[str] = None
+
 
 @app.api_route("/", methods=["GET", "HEAD"], response_class=HTMLResponse)
 @app.get("/login", response_class=HTMLResponse)
@@ -670,6 +680,89 @@ def health():
         "timestamp": datetime.utcnow().isoformat(),
         "database": "MySQL / SQLite Fallback"
     }
+
+@app.post("/api/auth/signup")
+def api_signup(req: SignupRequest, request: Request, db: Session = Depends(get_db)):
+    clean_email = req.email.strip().lower()
+    clean_phone = req.phone.strip()
+    digits_only = clean_phone.replace(" ", "").replace("+91", "").replace("-", "")
+
+    # Check if user already exists
+    existing_user = db.query(models.User).filter(
+        (models.User.username == clean_email) |
+        (models.User.phone == clean_phone)
+    ).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="An account with this email or mobile number already exists.")
+
+    for u in AUTHORIZED_USERS:
+        if clean_email == u["email"].lower() or (digits_only and digits_only == u.get("digitsPhone", "")):
+            raise HTTPException(status_code=400, detail="An account with this email or mobile number already exists.")
+
+    emp_id = req.employee_id or f"EMP-{int(datetime.utcnow().timestamp()) % 10000}"
+    user_id = f"USR-{int(datetime.utcnow().timestamp() * 1000) % 1000000}"
+
+    branch_id = req.branch_id or "BR-VADAPALANI"
+    branch_name = req.branch_name or "MedPlus Vadapalani Branch"
+
+    new_user = models.User(
+        id=user_id,
+        username=clean_email,
+        password_hash=req.password.strip(),
+        name=req.name.strip(),
+        role="Field Phlebotomist Executive",
+        employee_id=emp_id,
+        phone=clean_phone,
+        vehicle_number=req.vehicle_number or "TN-09-MK-1234",
+        branch_id=branch_id,
+        branch_name=branch_name,
+        is_super_admin=False
+    )
+    db.add(new_user)
+
+    # Log to tamper-evident audit ledger
+    now_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+    client_ip = request.client.host if request.client else "127.0.0.1"
+    audit_id = f"AUD-{int(datetime.utcnow().timestamp() * 1000)}"
+    details = f"New Field Executive registered: {req.name} ({clean_email}) assigned to {branch_name}. Vehicle: {new_user.vehicle_number}."
+    hash_sig = generate_security_hash(req.name, "USER_SIGNUP", user_id, details, now_str)
+
+    log_entry = models.AuditLog(
+        id=audit_id,
+        timestamp=datetime.utcnow(),
+        user_id=user_id,
+        user_name=req.name,
+        user_role="Field Phlebotomist Executive",
+        employee_id=emp_id,
+        branch_name=branch_name,
+        action="USER_SIGNUP",
+        target_id=user_id,
+        target_name=req.name,
+        details=details,
+        ip_address=client_ip,
+        security_hash=hash_sig
+    )
+    db.add(log_entry)
+    db.commit()
+
+    return {
+        "success": True,
+        "message": f"Account created successfully for {req.name}",
+        "user": {
+            "id": new_user.id,
+            "name": new_user.name,
+            "role": new_user.role,
+            "email": new_user.username,
+            "employeeId": new_user.employee_id,
+            "phone": new_user.phone,
+            "branchId": new_user.branch_id,
+            "branchName": new_user.branch_name,
+            "isSuperAdmin": False,
+            "isReadOnly": False,
+            "canManageUsers": False
+        }
+    }
+
 @app.post("/api/auth/login")
 def api_login(req: LoginRequest, request: Request, db: Session = Depends(get_db)):
     clean_user = req.username.strip().lower()
@@ -705,6 +798,11 @@ def api_login(req: LoginRequest, request: Request, db: Session = Depends(get_db)
                 "employeeId": db_user.employee_id,
                 "email": db_user.username,
                 "phone": db_user.phone,
+                "branch_id": db_user.branch_id or "BR-VADAPALANI",
+                "branch_name": db_user.branch_name or "MedPlus Vadapalani Branch",
+                "isSuperAdmin": bool(db_user.is_super_admin),
+                "isReadOnly": False,
+                "canManageUsers": False,
                 "passwords": [db_user.password_hash]
             }
 
