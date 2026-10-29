@@ -417,6 +417,21 @@ class TaskRejectRequest(BaseModel):
     user_role: Optional[str] = "Field Phlebotomist Lead"
     employee_id: Optional[str] = "EMP-9342"
 
+class TaskCreateRequest(BaseModel):
+    patient_name: str
+    patient_phone: str
+    patient_age: int
+    patient_gender: str
+    address: str
+    distance_km: float = 2.0
+    scheduled_time: str = "10:30 AM"
+    assays: str = "CBC + Fasting Blood Sugar"
+    amount: float = 750.0
+    assigned_to: str = "Ashwin Kumar"
+    user_name: Optional[str] = "Front-Desk Reception"
+    user_role: Optional[str] = "Front-Desk Receptionist"
+    employee_id: Optional[str] = "REC-2001"
+
 
 @app.api_route("/", methods=["GET", "HEAD"], response_class=HTMLResponse)
 @app.get("/login", response_class=HTMLResponse)
@@ -648,6 +663,79 @@ def api_get_tasks(status: Optional[str] = None, search: Optional[str] = None, db
             "testGroups": groups
         })
     return {"success": True, "count": len(results), "tasks": results}
+
+@app.post("/api/tasks")
+def api_create_task(req: TaskCreateRequest, request: Request, db: Session = Depends(get_db)):
+    task_id = f"TK-{int(datetime.utcnow().timestamp()) % 1000000}"
+    new_task = models.Task(
+        id=task_id,
+        patient_id=f"PAT-{int(datetime.utcnow().timestamp()) % 10000}",
+        patient_name=req.patient_name,
+        patient_phone=req.patient_phone,
+        patient_age=req.patient_age,
+        patient_gender=req.patient_gender,
+        address=req.address,
+        distance_km=req.distance_km,
+        scheduled_date="Today",
+        scheduled_time=req.scheduled_time,
+        status="pending",
+        payment_status="pending",
+        total_amount=req.amount,
+        container_temperature=-2.0,
+        reference_number=f"RAM{int(datetime.utcnow().timestamp()) % 10000}",
+        reassigned_to=req.assigned_to
+    )
+    grp = models.TaskTestGroup(
+        id=f"GRP-{task_id}",
+        task_id=task_id,
+        title=req.assays,
+        tube_type="EDTA (Purple Cap) + Serum (Gold Cap)"
+    )
+    new_task.test_groups = [grp]
+    db.add(new_task)
+
+    # Log to Security Audit Ledger
+    now_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+    client_ip = request.client.host if request.client else "127.0.0.1"
+    audit_id = f"AUD-{int(datetime.utcnow().timestamp() * 1000)}"
+    details = f"Booked home collection for {req.patient_name} ({req.patient_age}Y/{req.patient_gender}). Assays: {req.assays}. Assigned to: {req.assigned_to}."
+    hash_sig = generate_security_hash(req.user_name or "Reception", "TASK_BOOKED", task_id, details, now_str)
+
+    audit_entry = models.AuditLog(
+        id=audit_id,
+        timestamp=datetime.utcnow(),
+        user_id=req.employee_id or "REC-2001",
+        user_name=req.user_name or "Front-Desk Reception",
+        user_role=req.user_role or "Front-Desk Receptionist",
+        employee_id=req.employee_id or "REC-2001",
+        action="TASK_BOOKED",
+        target_id=task_id,
+        target_name=req.patient_name,
+        details=details,
+        ip_address=client_ip,
+        security_hash=hash_sig
+    )
+    db.add(audit_entry)
+    db.commit()
+
+    return {
+        "success": True,
+        "message": f"Task {task_id} booked successfully for {req.patient_name}",
+        "task": {
+            "id": new_task.id,
+            "patientName": new_task.patient_name,
+            "patientAge": new_task.patient_age,
+            "patientGender": new_task.patient_gender,
+            "address": new_task.address,
+            "scheduledTime": new_task.scheduled_time,
+            "distanceKm": new_task.distance_km,
+            "paymentStatus": "DUE",
+            "amount": new_task.total_amount,
+            "assays": req.assays,
+            "referenceNumber": new_task.reference_number,
+            "status": "pending"
+        }
+    }
 
 @app.get("/api/tasks/{task_id}")
 def api_get_task_detail(task_id: str, db: Session = Depends(get_db)):

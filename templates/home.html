@@ -111,6 +111,21 @@
     .widget-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 16px; }
     .btn-widget-action { width: 100%; height: 48px; border-radius: 24px; background: #0D9488; color: #FFFFFF; border: none; font-size: 14.5px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; transition: background 0.15s; }
     .btn-widget-action:hover { background: #0F766E; }
+
+    /* Modal Backdrop & Card */
+    .modal-backdrop { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
+    .modal-card { width: 100%; max-width: 600px; background: #FFFFFF; border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.2); padding: 32px; display: flex; flex-direction: column; gap: 18px; max-height: 90vh; overflow-y: auto; }
+    .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-group-item label { display: block; font-size: 12.5px; font-weight: 700; color: var(--text-dark); margin-bottom: 6px; }
+    .form-group-item input, .form-group-item select, .form-group-item textarea { width: 100%; border: 1.5px solid var(--surface-border); border-radius: 12px; padding: 10px 14px; font-size: 13.5px; outline: none; background: #FFFFFF; }
+    .form-group-item input:focus, .form-group-item select:focus, .form-group-item textarea:focus { border-color: var(--primary); }
+
+    /* Toast Notifications */
+    .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 3000; display: flex; flex-direction: column; gap: 10px; }
+    .toast-message { background: #0F172A; color: #FFFFFF; padding: 14px 20px; border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); display: flex; align-items: center; gap: 12px; font-size: 13.5px; font-weight: 600; min-width: 280px; animation: slideIn 0.3s ease-out; }
+    .toast-message.success { border-left: 4px solid #10B981; }
+    .toast-message.info { border-left: 4px solid #3B82F6; }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
   </style>
 </head>
 <body>
@@ -224,6 +239,45 @@
       </div>
     </section>
 
+    <!-- Real-Time IoT Waveform & Fleet GPS HUD Section -->
+    <section style="display:grid; grid-template-columns: 1fr 1.2fr; gap:20px;">
+      <!-- Real-Time Telemetry Waveform -->
+      <div style="background:#FFFFFF; border:1px solid var(--surface-border); border-radius:24px; padding:22px; box-shadow:0 4px 16px rgba(0,0,0,0.03); display:flex; flex-direction:column; justify-content:space-between; gap:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:18px;">📈</span>
+            <strong style="font-size:14px; color:var(--text-dark);">Real-Time IoT Temperature Telemetry Stream</strong>
+          </div>
+          <button onclick="simulateColdChainAlarm()" style="background:#F1F5F9; border:1px solid var(--surface-border); border-radius:14px; padding:4px 10px; font-size:11px; font-weight:700; color:var(--text-secondary); cursor:pointer;">
+            ⚡ Sensor Ping
+          </button>
+        </div>
+        <canvas id="tempTelemetryChart" width="460" height="120" style="width:100%; height:120px; border-radius:12px; background:#F8FAFC; border:1px solid var(--surface-border);"></canvas>
+        <div style="display:flex; justify-content:space-between; font-size:11.5px; color:var(--text-secondary);">
+          <span>Compliance Range: -4.0°C to +8.0°C</span>
+          <span style="color:#0284C7; font-weight:700;">Live Sensor: <span id="chartLiveTempText">-2.0°C</span> (Peltier Active)</span>
+        </div>
+      </div>
+
+      <!-- Real-Time Fleet GPS Tracker HUD -->
+      <div style="background:#FFFFFF; border:1px solid var(--surface-border); border-radius:24px; padding:22px; box-shadow:0 4px 16px rgba(0,0,0,0.03); display:flex; flex-direction:column; justify-content:space-between; gap:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:18px;">📍</span>
+            <strong style="font-size:14px; color:var(--text-dark);">Live Fleet GPS Tracker HUD</strong>
+          </div>
+          <span style="background:#ECFDF5; color:#065F46; border:1px solid #A7F3D0; padding:4px 10px; border-radius:12px; font-size:11px; font-weight:700;">
+            🏍️ KA-05-MK-4421 (Ashwin Kumar)
+          </span>
+        </div>
+        <canvas id="fleetGpsCanvas" width="560" height="120" style="width:100%; height:120px; border-radius:12px; background:#0B192C;"></canvas>
+        <div style="display:flex; justify-content:space-between; font-size:11.5px; color:var(--text-secondary);">
+          <span>Route: Koramangala Hub ➔ Sunrise Apts (Priya V.)</span>
+          <strong style="color:#10B981;">Live ETA: <span id="liveEtaText">6 mins</span> (0.8 km remaining)</strong>
+        </div>
+      </div>
+    </section>
+
     <section class="hero-metrics-grid">
       <div class="card-todays-collection">
         <div class="banner-header-flex">
@@ -283,6 +337,10 @@
             <span>🔍</span>
             <input type="text" id="searchBox" placeholder="Search patient name, address, or reference number..." oninput="handleSearch(this.value)">
           </div>
+
+          <button id="btnOpenBookModal" onclick="openBookModal()" style="background:var(--primary); color:#FFFFFF; border:none; border-radius:24px; padding:10px 20px; font-size:13.5px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px; box-shadow:0 2px 8px rgba(20,155,158,0.3); transition:all 0.15s; white-space:nowrap;">
+            <span>➕</span> Book Patient
+          </button>
         </div>
 
         <!-- Cards are drawn here by JavaScript -->
@@ -505,18 +563,349 @@
     } catch(e) {}
   }
 
+  // Real-Time IoT Waveform Drawing Engine
+  const tempChartCanvas = document.getElementById('tempTelemetryChart');
+  let tempHistory = [-2.0, -1.9, -2.0, -2.1, -2.0, -1.9, -2.0, -2.0, -1.9, -2.1, -2.0, -2.0];
+
+  function drawTelemetryChart() {
+    if (!tempChartCanvas) return;
+    const ctx = tempChartCanvas.getContext('2d');
+    const w = tempChartCanvas.width;
+    const h = tempChartCanvas.height;
+
+    ctx.clearRect(0, 0, w, h);
+
+    // Draw baseline grid
+    ctx.strokeStyle = '#E2E8F0';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, h / 2);
+    ctx.lineTo(w, h / 2);
+    ctx.stroke();
+
+    // Plot waveform line
+    ctx.strokeStyle = '#0284C7';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    const step = w / (tempHistory.length - 1);
+    tempHistory.forEach((temp, i) => {
+      // Map temp [-3.0, -1.0] to Y [h-15, 15]
+      const y = h / 2 + (temp - (-2.0)) * 60;
+      if (i === 0) ctx.moveTo(0, y);
+      else ctx.lineTo(i * step, y);
+    });
+    ctx.stroke();
+
+    // Draw glowing current dot
+    const lastY = h / 2 + (tempHistory[tempHistory.length - 1] - (-2.0)) * 60;
+    ctx.fillStyle = '#0284C7';
+    ctx.beginPath();
+    ctx.arc(w - 6, lastY, 5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Real-Time Fleet GPS Simulation Engine
+  const gpsCanvas = document.getElementById('fleetGpsCanvas');
+  let bikeProgress = 0.25;
+
+  function drawFleetGps() {
+    if (!gpsCanvas) return;
+    const ctx = gpsCanvas.getContext('2d');
+    const w = gpsCanvas.width;
+    const h = gpsCanvas.height;
+
+    ctx.clearRect(0, 0, w, h);
+
+    // Road network
+    ctx.strokeStyle = '#1E293B';
+    ctx.lineWidth = 8;
+    ctx.beginPath();
+    ctx.moveTo(40, h / 2);
+    ctx.bezierCurveTo(w * 0.35, h * 0.2, w * 0.65, h * 0.8, w - 40, h / 2);
+    ctx.stroke();
+
+    ctx.strokeStyle = '#38BDF8';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 6]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Hub Stop (Origin)
+    ctx.fillStyle = '#10B981';
+    ctx.beginPath();
+    ctx.arc(40, h / 2, 7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '10px -apple-system, sans-serif';
+    ctx.fillText('HUB (Koramangala)', 20, h / 2 - 14);
+
+    // Patient Stop (Destination)
+    ctx.fillStyle = '#EF4444';
+    ctx.beginPath();
+    ctx.arc(w - 40, h / 2, 7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillText('Priya V. (Sunrise Apts)', w - 130, h / 2 - 14);
+
+    // Bike Location
+    bikeProgress = (bikeProgress + 0.003) % 1.0;
+    const t = bikeProgress;
+    // Cubic bezier formula for bike position
+    const p0 = { x: 40, y: h / 2 };
+    const p1 = { x: w * 0.35, y: h * 0.2 };
+    const p2 = { x: w * 0.65, y: h * 0.8 };
+    const p3 = { x: w - 40, y: h / 2 };
+
+    const bx = Math.pow(1 - t, 3) * p0.x + 3 * Math.pow(1 - t, 2) * t * p1.x + 3 * (1 - t) * Math.pow(t, 2) * p2.x + Math.pow(t, 3) * p3.x;
+    const by = Math.pow(1 - t, 3) * p0.y + 3 * Math.pow(1 - t, 2) * t * p1.y + 3 * (1 - t) * Math.pow(t, 2) * p2.y + Math.pow(t, 3) * p3.y;
+
+    // Glowing bike radar circle
+    ctx.fillStyle = 'rgba(56, 189, 248, 0.3)';
+    ctx.beginPath();
+    ctx.arc(bx, by, 12, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#FDE047';
+    ctx.beginPath();
+    ctx.arc(bx, by, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    requestAnimationFrame(drawFleetGps);
+  }
+
+  // Toast Notification Routine
+  function showToast(title, message, type = 'success') {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+    const toast = document.createElement('div');
+    toast.className = `toast-message ${type}`;
+    toast.innerHTML = `
+      <div style="font-size:18px;">${type === 'success' ? '✔' : 'ℹ️'}</div>
+      <div>
+        <div style="font-weight:800; font-size:13px;">${esc(title)}</div>
+        <div style="font-size:12px; opacity:0.9;">${esc(message)}</div>
+      </div>
+    `;
+    container.appendChild(toast);
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transition = 'opacity 0.4s';
+      setTimeout(() => toast.remove(), 400);
+    }, 4500);
+  }
+
+  // Modal Handlers
+  function openBookModal() {
+    let u = {};
+    try { u = JSON.parse(localStorage.getItem('medreach_user') || '{}'); } catch(e) {}
+    if (u.isReadOnly) {
+      alert('Access Restricted: Compliance Auditor accounts cannot book new collections.');
+      return;
+    }
+    document.getElementById('bookPatientModal').style.display = 'flex';
+  }
+
+  function closeBookModal() {
+    document.getElementById('bookPatientModal').style.display = 'none';
+  }
+
+  async function handleBookPatientSubmit(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    const btn = document.getElementById('btnSubmitBook');
+    btn.disabled = true;
+    btn.innerText = 'Dispatching to Route...';
+
+    let u = { name: 'Front-Desk Reception', role: 'Front-Desk Receptionist', employeeId: 'REC-2001' };
+    try {
+      const stored = localStorage.getItem('medreach_user');
+      if (stored) u = JSON.parse(stored);
+    } catch(err) {}
+
+    const payload = {
+      patient_name: document.getElementById('newPatientName').value.trim(),
+      patient_phone: document.getElementById('newPatientPhone').value.trim(),
+      patient_age: parseInt(document.getElementById('newPatientAge').value) || 40,
+      patient_gender: document.getElementById('newPatientGender').value,
+      address: document.getElementById('newPatientAddress').value.trim(),
+      distance_km: 2.1,
+      scheduled_time: document.getElementById('newPatientTime').value,
+      assays: document.getElementById('newPatientAssays').value,
+      amount: parseFloat(document.getElementById('newPatientAmount').value) || 750,
+      assigned_to: document.getElementById('newPatientAssignee').value,
+      user_name: u.name,
+      user_role: u.role,
+      employee_id: u.employeeId
+    };
+
+    try {
+      const resp = await fetch('/api/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await resp.json();
+
+      if (resp.ok && data.success) {
+        // Prepend task to client list
+        appState.tasks.unshift(data.task);
+        renderTasks();
+        closeBookModal();
+        showToast('Pickup Scheduled!', `${payload.patient_name} added to ${payload.assigned_to}'s route.`);
+        fetchMiniAuditStream();
+        // Update kpi pending count
+        const kpiP = document.getElementById('kpiPending');
+        if (kpiP) kpiP.innerText = parseInt(kpiP.innerText || '0') + 1;
+      } else {
+        alert('Booking failed: ' + (data.detail || 'Server error'));
+      }
+    } catch(err) {
+      console.warn('Network issue, adding to local queue:', err);
+      const fakeTask = {
+        id: `TK-${Date.now() % 1000000}`,
+        patientName: payload.patient_name,
+        patientAge: payload.patient_age,
+        patientGender: payload.patient_gender,
+        address: payload.address,
+        scheduledTime: payload.scheduled_time,
+        distanceKm: 2.1,
+        paymentStatus: 'DUE',
+        amount: payload.amount,
+        assays: payload.assays,
+        referenceNumber: `RAM${Date.now() % 10000}`,
+        status: 'pending'
+      };
+      appState.tasks.unshift(fakeTask);
+      renderTasks();
+      closeBookModal();
+      showToast('Scheduled (Local Sync)!', `${payload.patient_name} added to active route.`);
+    } finally {
+      btn.disabled = false;
+      btn.innerText = 'Confirm Booking & Dispatch ➔';
+    }
+  }
+
+  function simulateColdChainAlarm() {
+    showToast('IoT Telemetry Ping', 'Sensors verified: Core -2.0°C | Peltier Active | 0 Excursions', 'info');
+  }
+
   // IoT Cold-chain telemetry fluctuation simulation
   setInterval(() => {
-    const temps = ['-2.0°C', '-1.9°C', '-2.0°C', '-2.1°C', '-2.0°C'];
-    const el = document.getElementById('liveIoTTemp');
-    if (el) el.innerText = temps[Math.floor(Math.random() * temps.length)];
-  }, 3500);
+    const nextVal = parseFloat((-2.0 + (Math.random() * 0.2 - 0.1)).toFixed(1));
+    tempHistory.shift();
+    tempHistory.push(nextVal);
+    drawTelemetryChart();
+
+    const tempStr = `${nextVal > 0 ? '+' : ''}${nextVal.toFixed(1)}°C`;
+    const el1 = document.getElementById('liveIoTTemp');
+    if (el1) el1.innerText = tempStr;
+    const el2 = document.getElementById('chartLiveTempText');
+    if (el2) el2.innerText = tempStr;
+  }, 2500);
 
   document.addEventListener('DOMContentLoaded', () => {
     updateCurrentUser();
     fetchTasks();
     fetchMiniAuditStream();
+    drawTelemetryChart();
+    requestAnimationFrame(drawFleetGps);
   });
 </script>
+
+  <!-- Book Patient Modal -->
+  <div id="bookPatientModal" class="modal-backdrop">
+    <div class="modal-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--surface-border); padding-bottom:14px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-size:24px;">➕</span>
+          <div>
+            <h3 style="font-size:18px; font-weight:800; color:var(--text-dark); margin:0;">Book Home Specimen Collection</h3>
+            <p style="font-size:12px; color:var(--text-secondary); margin:0;">Schedule home venipuncture and auto-dispatch to field route.</p>
+          </div>
+        </div>
+        <button onclick="closeBookModal()" style="background:none; border:none; font-size:22px; cursor:pointer; color:var(--text-secondary);">&times;</button>
+      </div>
+
+      <form id="bookPatientForm" onsubmit="handleBookPatientSubmit(event); return false;" style="display:flex; flex-direction:column; gap:14px;">
+        <div class="form-grid-2">
+          <div class="form-group-item">
+            <label>Patient Full Name *</label>
+            <input type="text" id="newPatientName" required placeholder="e.g. Ramesh Chandra">
+          </div>
+          <div class="form-group-item">
+            <label>Mobile Number *</label>
+            <input type="tel" id="newPatientPhone" required placeholder="e.g. +91 98450 12345">
+          </div>
+        </div>
+
+        <div class="form-grid-2">
+          <div class="form-group-item">
+            <label>Age *</label>
+            <input type="number" id="newPatientAge" required min="1" max="120" value="45">
+          </div>
+          <div class="form-group-item">
+            <label>Gender *</label>
+            <select id="newPatientGender">
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group-item">
+          <label>Doorstep Collection Address *</label>
+          <input type="text" id="newPatientAddress" required placeholder="Flat / House No, Street, Layout, Area, Bengaluru">
+        </div>
+
+        <div class="form-grid-2">
+          <div class="form-group-item">
+            <label>Prescribed Assays *</label>
+            <select id="newPatientAssays">
+              <option value="Complete Blood Count (CBC) + ESR">Complete Blood Count (CBC) + ESR</option>
+              <option value="Diabetic Profile (HbA1c + Fasting Sugar)">Diabetic Profile (HbA1c + Fasting Sugar)</option>
+              <option value="Comprehensive Lipid Profile Basic">Comprehensive Lipid Profile Basic</option>
+              <option value="Thyroid Function Test (T3, T4, TSH)">Thyroid Function Test (T3, T4, TSH)</option>
+              <option value="Master Health Checkup (Full Panel)">Master Health Checkup (Full Panel)</option>
+            </select>
+          </div>
+          <div class="form-group-item">
+            <label>Preferred Time Slot *</label>
+            <select id="newPatientTime">
+              <option value="08:00 AM">08:00 AM (Early Fasting)</option>
+              <option value="09:00 AM">09:00 AM</option>
+              <option value="10:30 AM" selected>10:30 AM</option>
+              <option value="11:45 AM">11:45 AM</option>
+              <option value="02:00 PM">02:00 PM (Post-Prandial)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-grid-2">
+          <div class="form-group-item">
+            <label>Assigned Field Executive</label>
+            <select id="newPatientAssignee">
+              <option value="Ashwin Kumar">Ashwin Kumar (Lead - KA-05-MK-4421)</option>
+              <option value="Ashok Pandian">Ashok Pandian (Senior Runner)</option>
+            </select>
+          </div>
+          <div class="form-group-item">
+            <label>Total Tariff Amount (₹)</label>
+            <input type="number" id="newPatientAmount" value="850">
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:10px; border-top:1px solid var(--surface-border); padding-top:14px;">
+          <button type="button" onclick="closeBookModal()" style="background:#F1F5F9; border:1px solid var(--surface-border); padding:10px 18px; border-radius:20px; font-size:13.5px; font-weight:700; cursor:pointer;">
+            Cancel
+          </button>
+          <button type="submit" id="btnSubmitBook" style="background:var(--primary); color:#FFFFFF; border:none; padding:10px 24px; border-radius:20px; font-size:13.5px; font-weight:700; cursor:pointer; box-shadow:0 4px 14px rgba(20,155,158,0.3);">
+            Confirm Booking &amp; Dispatch ➔
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="toast-container"></div>
 </body>
 </html>

@@ -223,13 +223,16 @@
         <div style="margin-bottom: 20px;">
           <label style="display: block; font-size: 13.5px; font-weight: 700; margin-bottom: 8px;">Associated Blood Vial Barcode</label>
           <div style="display: flex; gap: 8px;">
-            <input type="text" value="{{ barcode or 'BC982104921' }}" placeholder="Scan or enter tube barcode" style="flex: 1; border: 1.5px solid var(--surface-border); border-radius: 12px; padding: 12px 14px; font-size: 14.5px; outline: none; background: #F8FAFC;">
+            <input type="text" id="vialBarcodeVal" value="{{ barcode or 'BC982104921' }}" placeholder="Scan or enter tube barcode" style="flex: 1; border: 1.5px solid var(--surface-border); border-radius: 12px; padding: 12px 14px; font-size: 14.5px; outline: none; background: #F8FAFC;">
             <a href="/scanner?target=patient" style="background: #E3F5F4; color: #0E7F82; border-radius: 12px; padding: 0 16px; font-size: 13px; font-weight: 700; text-decoration: none; display: flex; align-items: center; gap: 6px;">
               📷 Scan
             </a>
           </div>
-          <div style="font-size: 11.5px; color: var(--text-secondary); margin-top: 6px;">
-            Link physical specimen vial to patient in database.
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top: 8px;">
+            <span style="font-size: 11.5px; color: var(--text-secondary);">Link physical specimen vial to patient in database.</span>
+            <button onclick="openVialLabelModal()" style="background:#F1F5F9; border:1px solid var(--surface-border); border-radius:12px; padding:4px 10px; font-size:11.5px; font-weight:700; color:var(--primary); cursor:pointer;">
+              🏷️ Print Tube Label
+            </button>
           </div>
         </div>
 
@@ -271,7 +274,98 @@
         window.location.replace('/login');
       }
     })();
+    function openVialLabelModal() {
+      const bc = document.getElementById('vialBarcodeVal').value || 'BC982104921';
+      document.getElementById('modalBarcodeText').innerText = bc;
+      document.getElementById('vialLabelModal').style.display = 'flex';
+    }
+
+    function closeVialLabelModal() {
+      document.getElementById('vialLabelModal').style.display = 'none';
+    }
   </script>
+
+  <!-- Printable Specimen Tube Label Modal -->
+  <div id="vialLabelModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.6); backdrop-filter:blur(4px); z-index:2000; align-items:center; justify-content:center; padding:20px;">
+    <div style="width:100%; max-width:440px; background:#FFFFFF; border-radius:24px; padding:28px; box-shadow:0 20px 50px rgba(0,0,0,0.2); display:flex; flex-direction:column; gap:18px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--surface-border); padding-bottom:12px;">
+        <strong style="font-size:16px; color:var(--text-dark);">Digital Specimen Label Sticker</strong>
+        <button onclick="closeVialLabelModal()" style="background:none; border:none; font-size:22px; cursor:pointer; color:var(--text-secondary);">&times;</button>
+      </div>
+
+      <!-- Thermal Label Sticker Card -->
+      <div style="background:#FFFFFF; border:2px dashed #94A3B8; border-radius:12px; padding:18px; font-family:monospace; box-shadow:0 4px 12px rgba(0,0,0,0.05);">
+        <div style="display:flex; justify-content:space-between; align-items:baseline; border-bottom:1px solid #E2E8F0; padding-bottom:6px; margin-bottom:10px;">
+          <strong style="font-size:13px; color:#0F172A;">MEDREACH DIAGNOSTICS</strong>
+          <span style="font-size:11px; color:#64748B;">TEMP: -2.0°C</span>
+        </div>
+
+        <div style="font-size:12px; line-height:1.5; color:#1E293B; margin-bottom:10px;">
+          <div><strong>PATIENT:</strong> Priya Venkatesh (34Y/F)</div>
+          <div><strong>SAMPLE:</strong> Whole Blood (Venous)</div>
+          <div><strong>PANEL:</strong> CBC + Lipid Profile + FBS</div>
+          <div><strong>COLL BY:</strong> Ashwin Kumar (EMP-9342)</div>
+        </div>
+
+        <!-- Simulated Code-128 Barcode Bars -->
+        <div style="text-align:center; padding:10px 0; background:#F8FAFC; border-radius:8px;">
+          <svg width="220" height="46" viewBox="0 0 220 46" style="display:block; margin:0 auto;">
+            <rect x="0" y="0" width="4" height="36" fill="#000" />
+            <rect x="6" y="0" width="2" height="36" fill="#000" />
+            <rect x="10" y="0" width="6" height="36" fill="#000" />
+            <rect x="18" y="0" width="2" height="36" fill="#000" />
+            <rect x="22" y="0" width="4" height="36" fill="#000" />
+            <rect x="28" y="0" width="8" height="36" fill="#000" />
+            <rect x="38" y="0" width="2" height="36" fill="#000" />
+            <rect x="42" y="0" width="4" height="36" fill="#000" />
+            <rect x="48" y="0" width="6" height="36" fill="#000" />
+            <rect x="56" y="0" width="2" height="36" fill="#000" />
+            <rect x="60" y="0" width="8" height="36" fill="#000" />
+            <rect x="70" y="0" width="4" height="36" fill="#000" />
+            <rect x="76" y="0" width="2" height="36" fill="#000" />
+            <rect x="80" y="0" width="6" height="36" fill="#000" />
+            <rect x="88" y="0" width="2" height="36" fill="#000" />
+            <rect x="92" y="0" width="6" height="36" fill="#000" />
+            <rect x="100" y="0" width="4" height="36" fill="#000" />
+            <rect x="106" y="0" width="2" height="36" fill="#000" />
+            <rect x="110" y="0" width="8" height="36" fill="#000" />
+            <rect x="120" y="0" width="2" height="36" fill="#000" />
+            <rect x="124" y="0" width="6" height="36" fill="#000" />
+            <rect x="132" y="0" width="4" height="36" fill="#000" />
+            <rect x="138" y="0" width="2" height="36" fill="#000" />
+            <rect x="142" y="0" width="8" height="36" fill="#000" />
+            <rect x="152" y="0" width="4" height="36" fill="#000" />
+            <rect x="158" y="0" width="2" height="36" fill="#000" />
+            <rect x="162" y="0" width="6" height="36" fill="#000" />
+            <rect x="170" y="0" width="2" height="36" fill="#000" />
+            <rect x="174" y="0" width="8" height="36" fill="#000" />
+            <rect x="184" y="0" width="4" height="36" fill="#000" />
+            <rect x="190" y="0" width="2" height="36" fill="#000" />
+            <rect x="194" y="0" width="6" height="36" fill="#000" />
+            <rect x="202" y="0" width="4" height="36" fill="#000" />
+            <rect x="208" y="0" width="2" height="36" fill="#000" />
+            <rect x="212" y="0" width="6" height="36" fill="#000" />
+            <text x="110" y="45" font-family="monospace" font-size="9" text-anchor="middle" fill="#000">* BC982104921 *</text>
+          </svg>
+          <div style="font-size:12px; font-weight:800; letter-spacing:1px; margin-top:4px;" id="modalBarcodeText">BC982104921</div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; font-size:11px;">
+          <span>CAP: 🟣 EDTA | 🟡 SST</span>
+          <span style="font-weight:700; color:#15803D;">✔ BIO-SAFE</span>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:10px;">
+        <button onclick="closeVialLabelModal()" style="background:#F1F5F9; border:1px solid var(--surface-border); padding:8px 16px; border-radius:18px; font-size:13px; font-weight:700; cursor:pointer;">
+          Close
+        </button>
+        <button onclick="window.print()" style="background:var(--primary); color:#FFFFFF; border:none; padding:8px 18px; border-radius:18px; font-size:13px; font-weight:700; cursor:pointer;">
+          🖨️ Print Label Sticker
+        </button>
+      </div>
+    </div>
+  </div>
 
 </body>
 </html>
